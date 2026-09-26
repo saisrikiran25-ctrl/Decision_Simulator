@@ -1,0 +1,1348 @@
+<title>Decision Simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,300&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#0b0e14; --bg2:#0f131b; --surface:#121722; --surface2:#171e2c; --surface3:#1d2536;
+  --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.15);
+  --ink:#e8ecf3; --ink2:#a9b3c6; --ink3:#8590a5;
+  --blue:#3ea6ff; --blue-soft:rgba(62,166,255,.13); --blue-line:rgba(62,166,255,.38);
+  --amber:#ffb84d; --amber-soft:rgba(255,184,77,.13); --amber-line:rgba(255,184,77,.4);
+  --green:#3ddc97; --green-soft:rgba(61,220,151,.12); --green-line:rgba(61,220,151,.4);
+  --slate:#5b6579;
+  --r:14px; --nav-h:56px;
+  --f-display:'Fraunces',Georgia,'Times New Roman',serif;
+  --f-body:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:calc(var(--nav-h) + 20px + env(safe-area-inset-top,0px))}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.6 var(--f-body);overflow-x:clip;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background-image:radial-gradient(rgba(255,255,255,.055) 1px,transparent 1px);background-size:26px 26px;mask-image:linear-gradient(#000,transparent 85%);-webkit-mask-image:linear-gradient(#000,transparent 85%)}
+main,footer{position:relative;z-index:1}
+h1,h2,h3,h4,p{margin:0}
+h1,h2,h3{text-wrap:balance}
+a{color:var(--blue)}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:6px}
+.wrap{width:min(1180px,100%);margin-inline:auto;padding-inline:clamp(16px,4vw,40px)}
+.mono{font-family:var(--f-mono)}
+.eyebrow{font:500 11px/1 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink3)}
+.tnum{font-variant-numeric:tabular-nums}
+
+/* nav */
+.nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;background:rgba(11,14,20,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.nav-in{display:flex;align-items:center;gap:16px;height:var(--nav-h);max-width:1400px}
+.brand{font:600 15px/1 var(--f-display);color:var(--ink);text-decoration:none;letter-spacing:-.01em;white-space:nowrap}
+.brand b{color:var(--blue);font-weight:600}
+.links{display:flex;gap:2px;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 12px,#000 calc(100% - 20px),transparent);mask-image:linear-gradient(90deg,transparent 0,#000 12px,#000 calc(100% - 20px),transparent);padding-inline:8px}
+.links::-webkit-scrollbar{display:none}
+.links a{display:flex;align-items:baseline;gap:6px;padding:8px 10px;border-radius:8px;color:var(--ink2);text-decoration:none;font-size:13px;white-space:nowrap;position:relative;transition:color .2s,background .2s}
+.links a i{font:500 10px var(--f-mono);font-style:normal;color:var(--ink3)}
+.links a:hover{color:var(--ink);background:rgba(255,255,255,.04)}
+.links a.on{color:var(--ink)}
+.links a.on i{color:var(--blue)}
+.links a.on::after{content:"";position:absolute;left:10px;right:10px;bottom:2px;height:2px;border-radius:2px;background:var(--blue)}
+.nav-cta{display:flex;gap:8px;align-items:center}
+.progress{height:2px;background:transparent}
+.progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--blue),#8fd0ff)}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border-radius:10px;border:1px solid var(--line2);background:transparent;color:var(--ink);font:500 13px/1 var(--f-body);text-decoration:none;white-space:nowrap;transition:background .2s,border-color .2s,transform .2s}
+.btn:hover{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.28)}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:#04121f;font-weight:600}
+.btn.primary:hover{background:#63b6ff}
+.btn.sm{padding:7px 11px;font-size:12px}
+.btn[aria-pressed="true"]{background:var(--blue-soft);border-color:var(--blue-line);color:var(--blue)}
+@media (max-width:760px){.nav-cta .ghost{display:none}.brand span{display:none}}
+
+/* hero */
+.hero{padding-block:clamp(40px,7vw,88px) 40px;position:relative}
+.hero::before{content:"";position:absolute;width:720px;height:720px;right:-220px;top:-260px;background:radial-gradient(closest-side,rgba(62,166,255,.16),transparent);pointer-events:none}
+.hero-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:40px;align-items:center}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;border:1px solid var(--line2);background:rgba(255,255,255,.03);font:500 11px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink2)}
+.pill.blue{color:var(--blue);border-color:var(--blue-line);background:var(--blue-soft)}
+.pill.amber{color:var(--amber);border-color:var(--amber-line);background:var(--amber-soft)}
+h1.title{font:400 clamp(44px,7.4vw,92px)/.98 var(--f-display);letter-spacing:-.03em;margin-top:22px;font-variation-settings:"opsz" 144}
+h1.title em{font-style:italic;color:var(--blue);font-weight:300}
+.lede{font:400 clamp(17px,2vw,21px)/1.5 var(--f-body);color:var(--ink2);max-width:34em;margin-top:20px}
+.mandate{margin-top:28px;padding:18px 0 4px 20px;border-left:1px solid var(--blue-line);max-width:44em}
+.mandate p{font:italic 300 clamp(16px,1.7vw,19px)/1.55 var(--f-display);color:var(--ink)}
+.hero-cta{display:flex;flex-wrap:wrap;gap:10px;margin-top:28px}
+.readouts{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;margin-top:44px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.ro{background:var(--surface);padding:16px 18px}
+.ro b{display:block;font:400 clamp(26px,3.4vw,40px)/1.05 var(--f-display);letter-spacing:-.02em;margin-top:8px}
+.ro small{display:block;font:400 12px/1.4 var(--f-body);color:var(--ink3);margin-top:4px}
+.hero-art{width:100%;max-width:400px;justify-self:end}
+@media (max-width:900px){.hero-grid{grid-template-columns:1fr}.hero-art{display:none}.readouts{grid-template-columns:repeat(2,1fr)}}
+
+/* sections */
+section.sec{padding-block:clamp(56px,8vw,104px) 0;position:relative}
+.sh{display:flex;gap:clamp(14px,3vw,28px);align-items:flex-start;margin-bottom:36px;padding-top:28px;border-top:1px solid var(--line)}
+.sn{font:300 clamp(56px,9vw,104px)/.8 var(--f-display);color:transparent;-webkit-text-stroke:1px var(--blue-line);letter-spacing:-.04em;font-variant-numeric:lining-nums}
+.sh h2{font:400 clamp(30px,4.4vw,52px)/1.05 var(--f-display);letter-spacing:-.02em}
+.sh .sub{color:var(--ink2);margin-top:10px;max-width:44em}
+.blk{margin-top:28px}
+.blk>.eyebrow{display:block;margin-bottom:12px}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
+@media (max-width:980px){.g4{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:1fr 1fr}}
+@media (max-width:720px){.g2,.g3,.g4{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px}
+.card h3{font:600 16px/1.3 var(--f-body);letter-spacing:-.005em}
+.card p,.card li{color:var(--ink2);font-size:14px}
+.card .eyebrow{display:block;margin-bottom:10px}
+.plain{border-top:1px solid var(--line);padding-top:16px}
+.callout{padding:22px 24px;border-radius:var(--r);background:linear-gradient(135deg,rgba(62,166,255,.12),rgba(62,166,255,.03));border:1px solid var(--blue-line);font:400 clamp(18px,2.2vw,24px)/1.4 var(--f-display);letter-spacing:-.01em}
+.list{list-style:none;padding:0;margin:14px 0 0;display:grid;gap:10px}
+.list li{position:relative;padding-left:20px}
+.list li::before{content:"";position:absolute;left:0;top:.62em;width:8px;height:1px;background:var(--blue)}
+.list.amber li::before{background:var(--amber)}
+.chip{display:inline-flex;align-items:center;gap:6px;font:600 10.5px/1 var(--f-mono);letter-spacing:.07em;text-transform:uppercase;padding:5px 9px;border-radius:999px;border:1px solid var(--line2);color:var(--ink2);white-space:nowrap}
+.chip.high{background:var(--amber);border-color:var(--amber);color:#1c1200}
+.chip.med{background:var(--amber-soft);border-color:var(--amber-line);color:var(--amber)}
+.chip.low{background:var(--green-soft);border-color:var(--green-line);color:var(--green)}
+.chip.blue{background:var(--blue-soft);border-color:var(--blue-line);color:var(--blue)}
+.chip.neutral{background:rgba(255,255,255,.04)}
+
+/* stakeholders */
+.stake{display:flex;flex-direction:column;gap:6px;min-height:118px}
+.stake h3{font-size:15px}
+.stake.urgent{background:var(--amber-soft);border-color:var(--amber-line)}
+.stake.urgent h3{color:var(--amber)}
+.stake.core{background:var(--blue-soft);border-color:var(--blue-line)}
+.stake .chip{align-self:flex-start;margin-bottom:4px}
+
+/* readiness */
+.ready{display:grid;grid-template-columns:130px 1fr 88px;gap:6px 16px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.ready:first-of-type{border-top:0}
+.ready b{font-size:14px}
+.ready span.d{color:var(--ink2);font-size:13.5px}
+.meter{grid-column:1/-1;height:6px;border-radius:6px;background:rgba(255,255,255,.07);position:relative;overflow:hidden}
+.meter i{position:absolute;inset:0 auto 0 0;background:var(--amber);border-radius:6px}
+.meter u{position:absolute;top:0;bottom:0;width:2px;background:var(--surface);left:33.3%}
+.meter u+u{left:66.6%}
+@media (max-width:560px){.ready{grid-template-columns:1fr auto}.ready span.d{grid-column:1/-1;order:3}}
+.concl{margin-top:14px;padding:12px 16px;border-radius:10px;background:var(--amber-soft);border:1px solid var(--amber-line);color:var(--ink);font-size:14px}
+.concl b{color:var(--amber)}
+
+/* service models & providers */
+.svc.primary{background:linear-gradient(180deg,rgba(62,166,255,.16),rgba(62,166,255,.04));border-color:var(--blue-line)}
+.svc h3{font:400 30px/1 var(--f-display);letter-spacing:-.02em;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.svc .role{color:var(--ink);font-weight:500;margin-top:12px}
+.crit{width:100%;border-collapse:collapse;min-width:520px}
+.crit th,.crit td{padding:12px 14px;text-align:left;border-top:1px solid var(--line);font-size:14px}
+.crit th{font:500 11px var(--f-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--ink3);border-top:0}
+.dots{display:inline-flex;gap:5px;vertical-align:middle}
+.dots i{width:11px;height:11px;border-radius:50%;border:1.5px solid var(--slate);display:block}
+.dots.az i.f{background:var(--blue);border-color:var(--blue)}
+.dots.aw i.f{background:#9aa7c2;border-color:#9aa7c2}
+.scroll{overflow-x:auto}
+.tryrow{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:20px;padding:14px 16px;border:1px dashed var(--line2);border-radius:12px;color:var(--ink2);font-size:14px}
+
+/* architecture */
+.pillar{padding:20px}
+.pillar .eyebrow{color:var(--blue)}
+.pillar h3{font:400 24px/1.15 var(--f-display);margin-top:8px;letter-spacing:-.01em}
+.stack{display:grid;gap:8px}
+.layer{display:grid;grid-template-columns:44px 1fr auto;gap:16px;align-items:center;padding:14px 18px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.layer .ix{font:500 12px var(--f-mono);color:var(--ink3)}
+.layer h3{font:600 15px/1.3 var(--f-body)}
+.layer p{color:var(--ink2);font-size:13.5px;margin-top:2px}
+.layer.hot{background:var(--blue-soft);border-color:var(--blue-line)}
+.layer.hot .ix{color:var(--blue)}
+.layer.base{background:var(--bg2)}
+.provs{display:flex;gap:8px}
+@media (max-width:640px){.layer{grid-template-columns:32px 1fr}.layer .chip,.layer .provs{grid-column:2}}
+
+/* 5Rs */
+.rrow{display:flex;flex-wrap:wrap;gap:8px}
+.rbtn{padding:9px 14px;border-radius:999px;border:1px solid var(--line2);background:transparent;font:500 13px var(--f-body);color:var(--ink2);transition:.2s}
+.rbtn b{font:500 11px var(--f-mono);color:var(--ink3);margin-left:6px}
+.rbtn:hover{color:var(--ink)}
+.rbtn[aria-pressed="true"]{background:var(--blue-soft);border-color:var(--blue-line);color:var(--blue)}
+.wl{transition:opacity .25s,border-color .25s}
+.wl.dim{opacity:.28}
+.wl .top{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:12px}
+.wl h3{margin-bottom:6px}
+.tl{display:flex;gap:3px;margin-top:14px;position:relative;padding-top:34px}
+.tl>div{height:34px;border-radius:8px;display:flex;align-items:center;padding-inline:12px;font:500 11px var(--f-mono);letter-spacing:.05em;color:#04121f}
+.tl .w1{background:#8fcaff}.tl .w2{background:var(--blue)}.tl .w3{background:#2a72b5;color:#e8f3ff}.tl .w4{background:#1f5588;color:#e8f3ff}
+.tl .here{position:absolute;top:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:4px;font:600 10px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--amber);white-space:nowrap}
+.tl .here::after{content:"";width:2px;height:22px;background:var(--amber)}
+.wave h3{font:400 24px/1.1 var(--f-display);margin:10px 0 12px}
+.roll{border-left:2px solid var(--green)}
+
+/* economics */
+.econ{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}
+@media (max-width:900px){.econ{grid-template-columns:1fr}}
+.donutwrap{display:grid;grid-template-columns:200px 1fr;gap:20px;align-items:center}
+@media (max-width:560px){.donutwrap{grid-template-columns:1fr;justify-items:center}}
+.legend{display:grid;gap:8px;width:100%}
+.lg{display:grid;grid-template-columns:12px 1fr auto;gap:10px;align-items:center;font-size:13.5px}
+.lg i{width:12px;height:12px;border-radius:3px;display:block}
+.lg span{color:var(--ink2)}
+.lg b{font:500 13px var(--f-mono)}
+.lg small{display:block;color:var(--ink3);font-size:12px}
+.kpi{display:flex;flex-direction:column;gap:6px}
+.kpi b{font:400 clamp(28px,3.4vw,40px)/1.05 var(--f-display);letter-spacing:-.02em}
+.kpi span{color:var(--ink2);font-size:13.5px}
+.tag{font:600 10px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--amber);border:1px solid var(--amber-line);background:var(--amber-soft);padding:4px 8px;border-radius:6px;white-space:nowrap}
+
+/* charts */
+svg text{font-family:var(--f-mono)}
+.chart{width:100%;height:auto;display:block}
+.legendrow{display:flex;flex-wrap:wrap;gap:14px;font-size:12.5px;color:var(--ink2);margin-top:10px}
+.legendrow span{display:inline-flex;align-items:center;gap:7px}
+.legendrow i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.legendrow i.ghost{background:transparent;border:1.5px dashed var(--blue)}
+.tip{position:fixed;z-index:80;pointer-events:none;background:#05070b;border:1px solid var(--line2);color:var(--ink);font:500 12px/1.4 var(--f-mono);padding:6px 9px;border-radius:8px;opacity:0;transform:translateY(4px);transition:opacity .12s,transform .12s;max-width:240px}
+.tip.on{opacity:1;transform:none}
+details.tbl{margin-top:12px;font-size:12.5px;color:var(--ink2)}
+details.tbl summary{cursor:pointer;color:var(--ink3);font:500 11px var(--f-mono);letter-spacing:.08em;text-transform:uppercase}
+details.tbl table{width:100%;border-collapse:collapse;margin-top:8px}
+details.tbl td,details.tbl th{padding:6px 8px;border-top:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums}
+details.tbl th:first-child,details.tbl td:first-child{text-align:left}
+.bar{position:relative;height:10px;border-radius:10px;background:rgba(255,255,255,.07);margin-top:16px}
+.bar .fill{position:absolute;inset:0 auto 0 0;border-radius:10px;background:var(--blue);transition:width .45s cubic-bezier(.2,.7,.2,1)}
+.bar .band{position:absolute;top:-4px;bottom:-4px;border-radius:4px;background:var(--green-soft);border:1px solid var(--green-line);border-inline-width:1px}
+.bar .tick{position:absolute;top:-6px;bottom:-6px;width:2px;background:var(--ink);border-radius:2px;transition:left .45s cubic-bezier(.2,.7,.2,1)}
+.bar .ghostm{position:absolute;top:-6px;bottom:-6px;width:0;border-left:2px dashed var(--ink2);opacity:0;transition:left .45s cubic-bezier(.2,.7,.2,1),opacity .2s}
+.bar.pin .ghostm{opacity:1}
+.bar .dot{position:absolute;top:50%;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;background:var(--blue);border:3px solid var(--surface);box-shadow:0 0 0 1px var(--blue);transition:left .45s cubic-bezier(.2,.7,.2,1)}
+.bar .dot.warn{background:var(--amber);box-shadow:0 0 0 1px var(--amber)}
+.axis{display:flex;justify-content:space-between;font:500 10.5px var(--f-mono);color:var(--ink3);margin-top:8px;position:relative;height:14px}
+.axis span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+.axis span:first-child{transform:none}
+.axis span:last-child{transform:translateX(-100%)}
+
+/* simulator */
+#simulator{padding-bottom:40px}
+#simulator::before{content:"";position:absolute;left:-200px;top:40px;width:760px;height:760px;background:radial-gradient(closest-side,rgba(62,166,255,.1),transparent);pointer-events:none;z-index:-1}
+.simtop{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:14px}
+.simtop .grp{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.strip{position:sticky;top:calc(var(--nav-h) + env(safe-area-inset-top,0px) + 2px);z-index:20;display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);border:1px solid var(--line2);border-radius:var(--r);overflow:hidden;box-shadow:0 12px 30px -12px rgba(0,0,0,.7)}
+.sc{background:rgba(18,23,34,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:11px 14px;min-width:0}
+.sc .eyebrow{display:flex;align-items:center;gap:6px;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sc b{display:block;font:400 clamp(20px,2.4vw,28px)/1.1 var(--f-display);letter-spacing:-.02em;margin-top:6px;white-space:nowrap}
+.live{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 rgba(61,220,151,.6);animation:pulse 2s infinite;flex:none}
+@keyframes pulse{70%{box-shadow:0 0 0 7px rgba(61,220,151,0)}100%{box-shadow:0 0 0 0 rgba(61,220,151,0)}}
+@media (max-width:720px){.strip{grid-template-columns:repeat(5,minmax(112px,1fr));overflow-x:auto}}
+.simgrid{display:grid;grid-template-columns:minmax(300px,380px) 1fr;gap:20px;margin-top:20px;align-items:start}
+@media (max-width:1000px){.simgrid{grid-template-columns:1fr}}
+.levers{display:grid;gap:14px}
+.lever{border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:16px 18px;margin:0;min-width:0}
+.lever legend{padding:0 6px;margin-left:-6px;font:500 11px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--blue)}
+.lever .hint{color:var(--ink3);font-size:12.5px;margin-top:10px;line-height:1.5}
+.sl{display:grid;grid-template-columns:1fr auto;gap:2px 10px;margin-top:12px}
+.sl label{font-size:13.5px;color:var(--ink)}
+.sl output{font:500 12.5px var(--f-mono);color:var(--ink2);text-align:right}
+.sl input{grid-column:1/-1}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:22px;background:transparent;margin:0}
+input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:4px;background:linear-gradient(90deg,var(--blue) var(--p,0%),rgba(255,255,255,.12) var(--p,0%))}
+input[type=range]::-moz-range-track{height:4px;border-radius:4px;background:rgba(255,255,255,.12)}
+input[type=range]::-moz-range-progress{height:4px;border-radius:4px;background:var(--blue)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--ink);border:3px solid var(--blue);margin-top:-7px;cursor:grab}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--ink);border:3px solid var(--blue);cursor:grab}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:4px;background:var(--bg);border:1px solid var(--line);border-radius:11px;margin-top:12px}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label{text-align:center;padding:9px 6px;border-radius:8px;font-size:13px;color:var(--ink2);cursor:pointer;transition:.2s}
+.seg input:checked+label{background:var(--blue-soft);color:var(--blue);box-shadow:inset 0 0 0 1px var(--blue-line)}
+.seg input:focus-visible+label{outline:2px solid var(--blue);outline-offset:1px}
+.seg>span{position:relative;display:block}
+.pace{margin-top:14px}
+.pace .track{position:relative;display:flex;height:26px;border-radius:7px;overflow:hidden;gap:2px}
+.pace .track div{transition:flex-basis .4s,background .3s}
+.pace .win{position:absolute;top:-4px;bottom:-4px;width:0;border-left:1px dashed var(--ink2)}
+.pace small{display:flex;justify-content:space-between;font:500 10.5px var(--f-mono);color:var(--ink3);margin-top:6px}
+.outs{display:grid;gap:16px;min-width:0}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:720px){.tiles{grid-template-columns:1fr}}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.tile .hd{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.tile .val{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 12px;margin-top:8px}
+.tile .val b{font:400 clamp(34px,4vw,46px)/1 var(--f-display);letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.tile .val .u{font:500 12px var(--f-mono);color:var(--ink3)}
+.dl{font:600 11px/1 var(--f-mono);padding:4px 7px;border-radius:6px;background:rgba(255,255,255,.05);color:var(--ink3);white-space:nowrap}
+.dl.good{background:var(--green-soft);color:var(--green)}
+.dl.bad{background:var(--amber-soft);color:var(--amber)}
+.pinv{font:500 11px var(--f-mono);color:var(--ink2);border:1px dashed var(--line2);border-radius:6px;padding:3px 7px;display:none}
+.pinv.on{display:inline-block}
+.tile .why{color:var(--ink2);font-size:13px;line-height:1.5;margin-top:auto;padding-top:14px}
+.tile .why::before{content:"WHY ";font:600 10px var(--f-mono);letter-spacing:.1em;color:var(--ink3)}
+.state{display:flex;align-items:center;gap:10px;margin-top:8px}
+.state b{font:400 clamp(30px,3.4vw,40px)/1 var(--f-display);letter-spacing:-.02em}
+.arrow{width:34px;height:34px;flex:none}
+.regrow{display:grid;grid-template-columns:minmax(150px,1.2fr) 92px 1fr 100px;gap:14px;align-items:center;padding:12px 0;border-top:1px solid var(--line);font-size:14px}
+.regrow:first-child{border-top:0}
+.regrow .mit{color:var(--ink2);font-size:13px}
+.rbar{height:6px;border-radius:6px;background:rgba(255,255,255,.07);position:relative}
+.rbar i{position:absolute;inset:0 auto 0 0;border-radius:6px;background:var(--blue);transition:width .4s}
+.rbar i.hi{background:var(--amber)}
+.rbar u{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink2);border-radius:2px}
+@media (max-width:720px){.regrow{grid-template-columns:1fr auto;gap:8px}.regrow .rbar,.regrow .mit{grid-column:1/-1}}
+
+/* board ask */
+.dec{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.dbtn{padding:11px 16px;border-radius:12px;border:1px solid var(--blue-line);background:var(--blue-soft);color:var(--ink);font:500 14px var(--f-body);text-align:left}
+.dbtn b{font:500 12px var(--f-mono);color:var(--blue);margin-right:8px}
+.dbtn[aria-pressed="true"]{background:var(--blue);border-color:var(--blue);color:#04121f}
+.dbtn[aria-pressed="true"] b{color:#04121f}
+.ddetail{margin-top:14px;color:var(--ink2);font-size:14px;min-height:24px}
+.appr{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+
+/* chat */
+.fab{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:40;box-shadow:0 14px 34px -10px rgba(62,166,255,.6)}
+.chat{position:fixed;top:0;right:0;bottom:0;width:min(430px,100vw);z-index:70;background:var(--surface);border-left:1px solid var(--line2);display:flex;flex-direction:column;transform:translateX(104%);visibility:hidden;transition:transform .3s cubic-bezier(.2,.7,.2,1),visibility 0s .3s;padding-top:env(safe-area-inset-top,0px);box-shadow:-30px 0 60px -30px rgba(0,0,0,.8)}
+.chat.open{transform:none;visibility:visible;transition:transform .3s cubic-bezier(.2,.7,.2,1),visibility 0s}
+.chat-hd{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line)}
+.chat-hd h2{font:400 22px/1.1 var(--f-display);letter-spacing:-.01em}
+.chat-hd p{font-size:12px;color:var(--ink3);margin-top:4px}
+.x{width:34px;height:34px;border-radius:9px;border:1px solid var(--line2);background:transparent;display:grid;place-items:center;flex:none}
+.log{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:14px;overscroll-behavior:contain}
+.msg{max-width:92%;font-size:14px;line-height:1.55}
+.msg.u{align-self:flex-end;background:var(--blue);color:#04121f;padding:9px 13px;border-radius:14px 14px 4px 14px;font-weight:500}
+.msg.b{align-self:flex-start;background:var(--surface2);border:1px solid var(--line);padding:12px 14px;border-radius:14px 14px 14px 4px;color:var(--ink)}
+.msg.b p+p{margin-top:8px}
+.msg .cite{display:block;margin-top:10px;font:500 10.5px var(--f-mono);letter-spacing:.06em;color:var(--ink3)}
+.msg .act{margin-top:10px}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+.qchip{padding:7px 11px;border-radius:999px;border:1px solid var(--line2);background:transparent;font-size:12.5px;color:var(--ink2);text-align:left;transition:.2s}
+.qchip:hover{border-color:var(--blue-line);color:var(--ink);background:var(--blue-soft)}
+.typing{display:inline-flex;gap:4px;padding:4px 2px}
+.typing i{width:6px;height:6px;border-radius:50%;background:var(--ink3);animation:bl 1s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes bl{0%,60%,100%{opacity:.3;transform:none}30%{opacity:1;transform:translateY(-3px)}}
+.chat-ft{padding:12px 14px calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line)}
+.chat-ft form{display:flex;gap:8px}
+.chat-ft input{flex:1;min-width:0;background:var(--bg);border:1px solid var(--line2);border-radius:11px;color:var(--ink);padding:11px 13px;font:400 14px var(--f-body)}
+.chat-ft input::placeholder{color:var(--ink3)}
+.chat-ft small{display:block;margin-top:8px;font:500 10.5px var(--f-mono);color:var(--ink3);letter-spacing:.04em}
+@media (max-width:640px){.chat{top:auto;height:88vh;height:88dvh;width:100%;border-left:0;border-top:1px solid var(--line2);border-radius:18px 18px 0 0;transform:translateY(104%)}.fab span{display:none}}
+
+footer{margin-top:80px;padding-block:32px 96px;border-top:1px solid var(--line);color:var(--ink3);font-size:13px}
+footer .wrap{display:flex;flex-wrap:wrap;gap:12px 24px;justify-content:space-between;align-items:center}
+
+@keyframes rise{from{opacity:.55;transform:translateY(12px)}to{opacity:1;transform:none}}
+.rise{animation:rise .7s cubic-bezier(.2,.7,.2,1) both}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}}
+
+/* risk register accordion */
+.reg{display:grid;gap:8px}
+.reg details{border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.reg details[open]{border-color:var(--line2)}
+.reg summary{display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer;list-style:none}
+.reg summary::-webkit-details-marker{display:none}
+.reg summary b{font-weight:600;flex:1}
+.reg .chev{width:8px;height:8px;border-right:1.5px solid var(--ink3);border-bottom:1.5px solid var(--ink3);transform:rotate(45deg);transition:transform .2s;margin-right:4px}
+.reg details[open] .chev{transform:rotate(225deg)}
+.reg details p{padding:0 16px 16px 16px;color:var(--ink2);font-size:14px}
+.reg summary .chip{min-width:56px;justify-content:center}
+main{overflow-x:clip}
+.hero,#simulator{overflow-x:clip}
+.nav-in{width:min(1400px,100%)}
+h1.title{font-size:clamp(42px,6vw,80px)}
+.donutwrap{grid-template-columns:1fr!important;justify-items:center;gap:18px}
+.lg b{white-space:nowrap}
+
+/* segmented control: full-width cells with a sliding thumb */
+.seg{position:relative;gap:0;padding:4px;isolation:isolate}
+.seg>span{position:relative;display:block;z-index:1}
+.seg label{display:block;width:100%;padding:10px 6px;border-radius:9px;background:transparent!important;box-shadow:none!important;color:var(--ink2);transition:color .25s;user-select:none}
+.seg label:hover{color:var(--ink)}
+.seg input:checked+label{color:var(--ink);font-weight:600}
+.seg::before{content:"";position:absolute;z-index:0;top:4px;bottom:4px;left:4px;width:calc((100% - 8px)/3);border-radius:9px;background:var(--blue-soft);box-shadow:inset 0 0 0 1px var(--blue-line);transition:transform .32s cubic-bezier(.3,.8,.2,1)}
+.seg:has(span:nth-child(2) input:checked)::before{transform:translateX(100%)}
+.seg:has(span:nth-child(3) input:checked)::before{transform:translateX(200%)}
+.seg input:focus-visible+label{outline:2px solid var(--blue);outline-offset:-2px}
+@supports not selector(:has(*)){.seg::before{display:none}.seg input:checked+label{background:var(--blue-soft)!important;box-shadow:inset 0 0 0 1px var(--blue-line)!important}}
+@media (prefers-reduced-motion:reduce){.seg::before{transition:none}}
+.links a svg{width:15px;height:15px;flex:none;align-self:center;fill:none;stroke:var(--ink3);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;transition:stroke .2s}
+.links a.on svg{stroke:var(--blue)}
+.brand{font-size:16px}
+.sico{flex:none;width:clamp(48px,6vw,64px);height:clamp(48px,6vw,64px);border-radius:16px;display:grid;place-items:center;background:var(--blue-soft);border:1px solid var(--blue-line)}
+.sico svg{width:52%;height:52%;fill:none;stroke:var(--blue);stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round}
+.hero-art{max-width:440px;overflow:visible}
+.hero-art .flow{stroke-dasharray:3 11;animation:flow 2.6s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-56}}
+.hero-art .orbit{transform-box:view-box;transform-origin:50% 50%;animation:spin 26s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.hero-art .ping{transform-box:fill-box;transform-origin:center;animation:ping 3s ease-out infinite}
+@keyframes ping{0%{transform:scale(.8);opacity:.8}100%{transform:scale(2.4);opacity:0}}
+
+</style>
+<header class="nav" id="top">
+  <div class="nav-in wrap">
+    <a class="brand" href="#hero" aria-label="Decision Simulator, top of page">Decision Simulator</a>
+    <nav class="links" id="links" aria-label="Deck sections"></nav>
+    <div class="nav-cta">
+      <button class="btn primary" type="button" id="navAsk" aria-controls="chat" aria-expanded="false">Ask the Deck</button>
+    </div>
+  </div>
+  <div class="progress" aria-hidden="true"><i id="prog"></i></div>
+</header>
+
+<main>
+  <section class="hero" id="hero">
+    <div class="wrap">
+      <div class="hero-grid rise">
+        <div>
+          <span class="pill blue">IT Services &amp; Global Capability Centre</span>
+          <h1 class="title">Cloud Transformation <em>2030</em></h1>
+          <p class="lede">From legacy IT services provider to an AI-enabled, data-driven digital services business. The ABC Technology Services proposal, with a simulator to stress-test it.</p>
+          <div class="mandate"><span class="eyebrow">Strategic mandate</span><p style="margin-top:10px" id="mandate"></p></div>
+          <div class="hero-cta">
+            <a class="btn primary" href="#simulator">Simulate the transformation</a>
+            <button class="btn" type="button" data-ask>Ask the Deck</button>
+            <span class="pill amber">All figures illustrative assumptions</span>
+          </div>
+        </div>
+        <svg class="hero-art" viewBox="0 0 440 440" role="img" aria-label="Architecture map: a CCoE hub linking Azure as the primary cloud, AWS as secondary, a Data and AI layer, dev/test environments and retained on-premises systems">
+          <defs>
+            <radialGradient id="hg" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#3ea6ff" stop-opacity=".22"/><stop offset=".6" stop-color="#3ea6ff" stop-opacity=".05"/><stop offset="1" stop-color="#3ea6ff" stop-opacity="0"/></radialGradient>
+            <linearGradient id="orb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3ea6ff" stop-opacity=".9"/><stop offset="1" stop-color="#3ea6ff" stop-opacity="0"/></linearGradient>
+          </defs>
+          <circle cx="220" cy="220" r="215" fill="url(#hg)"/>
+          <circle cx="220" cy="220" r="150" fill="none" style="stroke:var(--line2)" stroke-width="1"/>
+          <circle cx="220" cy="220" r="92" fill="none" style="stroke:var(--line)" stroke-width="1" stroke-dasharray="2 6"/>
+          <g class="orbit"><path d="M220 70 A150 150 0 0 1 370 220" fill="none" stroke="url(#orb)" stroke-width="1.6" stroke-linecap="round"/><circle cx="370" cy="220" r="3.4" style="fill:var(--blue)"/></g>
+          <path d="M326 114 Q382 205 350 295" fill="none" style="stroke:var(--blue-line)" stroke-width="1" stroke-dasharray="3 5"/>
+          <g fill="none" stroke-linecap="round">
+            <g style="stroke:var(--blue-line)" stroke-width="1.2"><path d="M220 220L326 114M220 220L350 295M220 220L194 368M220 220L114 114"/></g>
+            <g style="stroke:var(--blue)" stroke-width="1.4" class="flow"><path d="M220 220L326 114M220 220L350 295M220 220L194 368M220 220L114 114"/></g>
+            <path d="M220 220L72 246" style="stroke:var(--slate)" stroke-width="1.2" stroke-dasharray="2 5"/>
+          </g>
+          <circle class="ping" cx="194" cy="368" r="11" fill="none" style="stroke:var(--blue)" stroke-width="1.2"/>
+          <circle cx="220" cy="220" r="40" style="fill:var(--surface);stroke:var(--blue-line)" stroke-width="1"/>
+          <circle cx="220" cy="220" r="30" style="fill:var(--blue-soft);stroke:var(--blue)" stroke-width="1.3"/>
+          <text x="220" y="218" text-anchor="middle" font-size="12" font-weight="600" style="fill:var(--ink)">CCoE</text>
+          <text x="220" y="231" text-anchor="middle" font-size="7.5" letter-spacing="1" style="fill:var(--ink3)">GOVERNS</text>
+          <circle cx="326" cy="114" r="13" style="fill:var(--blue);stroke:var(--blue)" stroke-width="1.6"/>
+          <text x="326" y="85" text-anchor="middle" font-size="11" font-weight="600" letter-spacing="1.2" style="fill:var(--ink)">AZURE</text>
+          <text x="326" y="96" text-anchor="middle" font-size="8.5" letter-spacing=".6" style="fill:var(--ink3)">primary cloud</text>
+          <circle cx="114" cy="114" r="8" style="fill:var(--bg);stroke:var(--ink2)" stroke-width="1.6"/>
+          <text x="114" y="90" text-anchor="middle" font-size="11" font-weight="600" letter-spacing="1.2" style="fill:var(--ink)">DEV/TEST</text>
+          <text x="114" y="101" text-anchor="middle" font-size="8.5" letter-spacing=".6" style="fill:var(--ink3)">wave 1</text>
+          <circle cx="350" cy="295" r="10" style="fill:var(--bg);stroke:var(--ink2)" stroke-width="1.6"/>
+          <text x="350" y="320" text-anchor="middle" font-size="11" font-weight="600" letter-spacing="1.2" style="fill:var(--ink)">AWS</text>
+          <text x="350" y="332" text-anchor="middle" font-size="8.5" letter-spacing=".6" style="fill:var(--ink3)">secondary cloud</text>
+          <circle cx="194" cy="368" r="11" style="fill:var(--bg);stroke:var(--blue)" stroke-width="1.6"/>
+          <text x="194" y="394" text-anchor="middle" font-size="11" font-weight="600" letter-spacing="1.2" style="fill:var(--ink)">DATA + AI</text>
+          <text x="194" y="406" text-anchor="middle" font-size="8.5" letter-spacing=".6" style="fill:var(--ink3)">revenue engine</text>
+          <circle cx="72" cy="246" r="8" style="fill:var(--bg);stroke:var(--slate)" stroke-width="1.6"/>
+          <text x="72" y="269" text-anchor="middle" font-size="11" font-weight="600" letter-spacing="1.2" style="fill:var(--ink)">ON-PREM</text>
+          <text x="72" y="281" text-anchor="middle" font-size="8.5" letter-spacing=".6" style="fill:var(--ink3)">retained</text>
+        </svg>
+      </div>
+      <div class="readouts rise" aria-label="Headline numbers">
+        <div class="ro"><span class="eyebrow">Board envelope</span><b>₹25 Cr</b><small>Total investment, 3-year</small></div>
+        <div class="ro"><span class="eyebrow">Horizon</span><b>36 mo</b><small>Four stages, Assess to Optimise</small></div>
+        <div class="ro"><span class="eyebrow">Migration</span><b>3 waves</b><small>Guided by the 5Rs framework</small></div>
+        <div class="ro"><span class="eyebrow">Board asks</span><b>4</b><small>Decisions required today</small></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="overview" aria-labelledby="ovh">
+    <div class="wrap">
+      <div class="sh">
+        <span class="sico" aria-hidden="true"><svg viewBox="0 0 16 16"><rect x="2" y="2" width="5" height="5" rx="1.2"/><rect x="9" y="2" width="5" height="5" rx="1.2"/><rect x="2" y="9" width="5" height="5" rx="1.2"/><rect x="9" y="9" width="5" height="5" rx="1.2"/></svg></span>
+        <div>
+          <h2 id="ovh">The proposal in brief</h2>
+          <p class="sub">Eight ideas, one line each. Use the simulator to test them and the chat to go deeper.</p>
+        </div>
+      </div>
+      <div id="ovBody"></div>
+    </div>
+  </section>
+
+  <section class="sec" id="simulator" aria-labelledby="simh">
+    <div class="wrap">
+      <div class="sh">
+        <span class="sico" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M2 4.5h7M12 4.5h2M2 11.5h2M7 11.5h7"/><circle cx="10.5" cy="4.5" r="1.7"/><circle cx="5.5" cy="11.5" r="1.7"/></svg></span>
+        <div>
+          <h2 id="simh">Simulate the Transformation</h2>
+          <p class="sub">Move the deck's own levers and watch its own outcome metrics recompute. Every output is an illustrative estimate, calibrated so the Board-recommended plan lands on the deck's stated figures.</p>
+        </div>
+      </div>
+
+      <div class="simtop">
+        <div class="grp">
+          <button class="btn sm" type="button" id="resetBtn">Reset to Board-recommended plan</button>
+          <button class="btn sm" type="button" id="cmpBtn" aria-pressed="false">Compare scenarios</button>
+          <button class="btn sm" type="button" id="repinBtn" hidden>Re-pin A to current</button>
+        </div>
+        <span class="tag">Illustrative estimate</span>
+      </div>
+      <p id="cmpNote" class="eyebrow" style="margin-bottom:12px" hidden>Scenario A pinned. Adjust the levers to build Scenario B. Ghost marks show A.</p>
+
+      <div class="strip" id="strip" role="group" aria-label="Headline outcomes, live">
+        <div class="sc"><span class="eyebrow"><i class="live"></i>Infra cost</span><b id="ss-sav">–</b></div>
+        <div class="sc"><span class="eyebrow">Provisioning</span><b id="ss-prov">–</b></div>
+        <div class="sc"><span class="eyebrow">Payback</span><b id="ss-pay">–</b></div>
+        <div class="sc"><span class="eyebrow">Migrated Y3</span><b id="ss-mg">–</b></div>
+        <div class="sc"><span class="eyebrow">Certified Y2</span><b id="ss-cert">–</b></div>
+      </div>
+
+      <div class="simgrid">
+        <div class="levers" id="levers"></div>
+        <div class="outs" id="outs"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Decision Simulator · Cloud Transformation 2030 · ABC Technology Services</span>
+    <span class="tag">All figures are illustrative assumptions</span>
+  </div>
+</footer>
+
+<button class="btn primary fab" type="button" id="fab" aria-controls="chat" aria-expanded="false">Ask the Deck<span> →</span></button>
+
+<aside class="chat" id="chat" role="dialog" aria-label="Ask the Deck" aria-hidden="true" inert>
+  <div class="chat-hd">
+    <div><h2>Ask the Deck</h2><p>Answers come only from this proposal.</p></div>
+    <button class="x" type="button" id="chatClose" aria-label="Close chat"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
+  </div>
+  <div class="log" id="log" aria-live="polite"></div>
+  <div class="chat-ft">
+    <form id="chatForm" autocomplete="off">
+      <input id="chatIn" type="text" placeholder="Ask about any section…" aria-label="Your question" maxlength="240">
+      <button class="btn primary" type="submit">Send</button>
+    </form>
+    <small>Scope: the 8 sections of Cloud Transformation 2030</small>
+  </div>
+</aside>
+
+<div class="tip" id="tip" role="tooltip"></div>
+<script>
+/* ============================================================
+   DECK — single source of truth for narrative sections,
+   the simulator defaults and the chatbot knowledge base.
+   All figures are the deck's own illustrative assumptions.
+   ============================================================ */
+const DECK = {
+  mandate: "Adopt a multi-cloud, PaaS-led transformation anchored on DevOps, an AI/data platform and workforce reskilling — to convert ABC Technology Services from a cost-centre IT shop into a scalable, margin-accretive AI-enabled digital services and GCC business, within the Board's ₹25 crore, 3-year envelope.",
+  sections: [
+    { id: "s01", n: "01", name: "The Problem", short: "Problem", sub: "Present situation and business context" },
+    { id: "s02", n: "02", name: "The Strategy", short: "Strategy", sub: "Objectives, readiness and service models" },
+    { id: "s03", n: "03", name: "The Architecture", short: "Architecture", sub: "Target cloud model" },
+    { id: "s04", n: "04", name: "The Migration", short: "Migration", sub: "Strategy, workloads and sequencing" },
+    { id: "s05", n: "05", name: "The Economics", short: "Economics", sub: "TCO, ROI and FinOps strategy" },
+    { id: "s06", n: "06", name: "Risk & Governance", short: "Risk", sub: "Cybersecurity and operating controls" },
+    { id: "s07", n: "07", name: "People & Change", short: "People", sub: "Skills, operating model and adoption" },
+    { id: "s08", n: "08", name: "Roadmap & Outcomes", short: "Roadmap", sub: "Phasing, KPIs and the Board request" }
+  ],
+  problem: {
+    statement: "ABC cannot win or retain higher-value, AI-enabled digital services engagements or protect delivery margins while operating on legacy, siloed infrastructure with limited automation.",
+    realities: [
+      "Delivery model largely on-premises / VM-based.",
+      "Fragmented application landscape per client account.",
+      "Low analytics maturity, relying on static spreadsheets.",
+      "Inconsistent DevOps and automation across accounts.",
+      "Ageing infrastructure drives rising maintenance cost."
+    ],
+    risk: ["Clients demand cloud-native AI", "Talent market is tightening", "GCC cost and capability arbitrage is eroding"],
+    stakeholders: [
+      { k: "CEO", t: "Losing deals to rivals" },
+      { k: "CFO", t: "Margin erosion; capex spend", urgent: true },
+      { k: "CIO / CTO", t: "Tech debt, security exposure" },
+      { k: "COO / Delivery", t: "Slow provisioning, SLA risk" },
+      { k: "Engineers", t: "Manual, repetitive toil" },
+      { k: "Clients", t: "Expect cloud-native AI" },
+      { k: "Risk & Compliance", t: "Multi-tenancy data risk" }
+    ]
+  },
+  strategy: {
+    objectives: [
+      { k: "Modernise platform", t: "Cut cost-to-serve; compress provisioning from weeks to hours." },
+      { k: "Build AI & data", t: "Launch new AI services; increase revenue per engagement." },
+      { k: "Governed multi-cloud", t: "Establish an operating model with FinOps to protect margins." }
+    ],
+    readiness: [
+      { k: "Applications", d: "Monolithic, low containerisation", lvl: "Low-Med", n: 1.5 },
+      { k: "Data", d: "Siloed, spreadsheet reporting", lvl: "Low", n: 1 },
+      { k: "Security", d: "Perimeter-based, limited zero-trust", lvl: "Med", n: 2 },
+      { k: "Skills", d: "Concentrated in small pockets", lvl: "Low", n: 1 },
+      { k: "Governance", d: "No unified CCoE", lvl: "Low", n: 1 }
+    ],
+    conclusion: "Foundational stage. Phased transformation required.",
+    models: [
+      { k: "IaaS", role: "Bridge for legacy and regulated client workloads.", pts: ["Lift-and-shift first approach", "Avoids risky Day 1 re-architecture", "Ensures operational continuity"] },
+      { k: "PaaS", primary: true, role: "Core driver for application modernisation and new AI services.", pts: ["Accelerates DevOps and CI/CD pipelines", "Removes repetitive infrastructure toil", "Empowers engineers to focus on billable value"] },
+      { k: "SaaS", role: "Optimised for internal enterprise functions.", pts: ["Covers ITSM, HRMS and collaboration", "Reduces internal IT overhead", "Standardised cloud operations"] }
+    ],
+    providers: [
+      { k: "Azure", tag: "Primary cloud", role: "Core platform", t: "Primary hub for enterprise apps, AI/ML services and identity integration." },
+      { k: "AWS", tag: "Secondary cloud", role: "Resilience & diversity", t: "Secondary footprint avoiding vendor lock-in and supporting specialised workloads." },
+      { k: "On-premises", tag: "Data residency", role: "Limited retain", t: "Retained strictly for sovereign data requirements and legacy compliance." }
+    ],
+    criteria: [
+      ["Enterprise / hybrid tooling fit", 4, 3],
+      ["AI/ML platform maturity", 4, 4],
+      ["India regions / compliance", 3, 3],
+      ["Talent availability (India)", 3, 3],
+      ["Cost predictability", 3, 2]
+    ]
+  },
+  arch: {
+    pillars: [
+      { k: "Multi-Cloud Foundation", t: "Azure primary and AWS secondary" },
+      { k: "Data & AI Engine", t: "Centralised analytics and MLOps" },
+      { k: "Modular Service Layers", t: "Client delivery, security and SaaS" }
+    ],
+    layers: [
+      { k: "Client Delivery Layer", t: "Cloud-native apps, Kubernetes, API gateway for internal and external clients" },
+      { k: "Shared Services Layer (SaaS)", t: "ITSM, HRMS, collaboration tools" },
+      { k: "Data & AI Layer", t: "Centralised data lake, AI/ML workbench, MLOps pipeline", hot: "New revenue engine" },
+      { k: "DevOps / Automation Layer", t: "CI/CD pipelines, Infrastructure-as-Code (IaC), environment self-service" },
+      { k: "Security Layer", t: "Centralised IAM (Entra), zero-trust segmentation per client, CASB, encryption" },
+      { k: "Connectivity Layer", t: "ExpressRoute / VPN linking retained on-prem to cloud landing zones" },
+      { k: "Multi-Cloud Landing Zones", t: "Standardised, policy-governed environments via IaC", base: true }
+    ]
+  },
+  migration: {
+    rs: ["Rehost", "Replatform", "Refactor", "Retire", "Retain"],
+    workloads: [
+      { r: "Replatform", tag: "Replatform", k: "Client Delivery / PM Tools", t: "Move to managed PaaS app + DB. Gain scale, low rework.", wave: "Wave 2" },
+      { r: "Rehost", tag: "Rehost (first)", k: "Internal ERP / Finance", t: "Lift-and-shift to reduce risk; refactor in a later wave.", wave: "Refactor in Wave 3" },
+      { r: "Retire", tag: "Retire", k: "Legacy ITSM Tool", t: "Replace with modern SaaS. Lower cost than migrating.", wave: "Wave 1" },
+      { r: "Refactor", tag: "Refactor / Rearchitect", k: "Client Analytics Apps", t: "Rebuild as cloud-native microservices (new revenue).", wave: "Wave 2" },
+      { r: "Retain", tag: "Retain (short term)", k: "HR / Payroll System", t: "Compliance constraints; reassess in Wave 3.", wave: "Reassess in Wave 3" },
+      { r: "Replatform", tag: "Replatform", k: "Dev / Test Environments", t: "Containerise + IaC for fast self-service provisioning.", wave: "Wave 1" }
+    ],
+    waves: [
+      { n: 1, range: "M0 – M6", from: 0, to: 6, items: ["Dev/test environments", "Internal SaaS (ITSM, collaboration)", "CCoE and landing zones"] },
+      { n: 2, range: "M6 – M18", from: 6, to: 18, items: ["Replatform PM / delivery tools", "Refactor analytics apps", "Build data lake / AI platform"] },
+      { n: 3, range: "M18 – M36", from: 18, to: 36, items: ["ERP refactor", "Regulated client workloads", "Full FinOps maturity"] }
+    ],
+    rollback: [
+      { k: "Phased parallel-run", t: "Parallel-run each workload, phased per account." },
+      { k: "Warm standby", t: "Legacy kept in warm standby after cutover." },
+      { k: "Blue-green cutover", t: "Blue-green deployment for client systems." },
+      { k: "Post-wave optimisation", t: "Rightsizing review 4–6 weeks after each wave." }
+    ]
+  },
+  econ: {
+    total: 25,
+    budget: [
+      { k: "Migration", pct: 40, t: "Core workloads and app migration", c: "#3ea6ff" },
+      { k: "Infra / PaaS", pct: 25, t: "Cloud platform and infrastructure", c: "#a5d4ff" },
+      { k: "Skills", pct: 10, t: "Training and CCoE enablement", c: "#7d8fb5" },
+      { k: "AI Build", pct: 10, t: "Data lake and AI platform", c: "#b5a4ff" },
+      { k: "Security / Governance", pct: 10, t: "Security, risk and governance", c: "#5fc2d6" },
+      { k: "Contingency", pct: 5, t: "Operational buffer and reserve", c: "#ffb84d" }
+    ],
+    roi: [
+      { v: "20–25%", t: "Reduction in infra maintenance by Year 3" },
+      { v: "Wks → Hrs", t: "Environment provisioning time" },
+      { v: "New line", t: "Revenue from managed AI services" },
+      { v: "Near-zero", t: "Downtime SLA penalties" }
+    ],
+    finops: [
+      "Cost tagging per account for chargeback.",
+      "Budgets, alerts and monthly reviews.",
+      "Reserved instances / savings plans.",
+      "Regular rightsizing reviews by the CCoE."
+    ]
+  },
+  risk: {
+    top: [
+      { t: "Multi-tenant data leakage across accounts.", s: "high" },
+      { t: "Insecure APIs on refactored client apps.", s: "med" },
+      { t: "Identity sprawl across multiple clouds.", s: "med" },
+      { t: "Insider threat from broad access needs.", s: "med" },
+      { t: "Ransomware / third-party risk.", s: "high" }
+    ],
+    controls: [
+      "Zero-trust architecture with per-client segments.",
+      "Centralised IAM (SSO + MFA).",
+      "Encryption at rest and in transit by default.",
+      "CASB + SIEM/SOC for monitoring.",
+      "DevSecOps: scanning shifted left in CI/CD."
+    ],
+    tiers: [
+      { k: "CIO / CTO", t: "Strategic platform decisions" },
+      { k: "Cloud Centre of Excellence (CCoE)", t: "Architecture standards, FinOps guardrails" },
+      { k: "Business / Account Owners", t: "Client-specific exceptions, compliance" }
+    ],
+    register: [
+      { k: "Cost overrun", s: "high", m: "FinOps guardrails, monthly budget alerts, CCoE cost review." },
+      { k: "Multi-tenant data breach", s: "high", m: "Network segmentation, encryption, periodic access reviews." },
+      { k: "Skills gap delaying migration", s: "med", m: "Structured reskilling plus short-term partner / MSP support." },
+      { k: "Vendor lock-in", s: "med", m: "Multi-cloud architecture, portable IaC, avoid proprietary-only." },
+      { k: "Client SLA disruption", s: "low", m: "Phased, per-account cutover with tested rollback plans." }
+    ],
+    compliance: ["India DPDP Act", "ISO 27001", "SOC 2"]
+  },
+  people: {
+    tracks: [
+      "Certifications (Associate → Professional) on Azure / AWS.",
+      "DevOps / CI-CD bootcamps for delivery engineers.",
+      "Targeted AI/ML cohorts to seed the new practice.",
+      "Partner-led training via hyperscaler academies."
+    ],
+    roles: ["Cloud Architect", "DevSecOps Engineer", "FinOps Analyst", "AI/ML Engineer", "CCoE Lead"],
+    from: { k: "Siloed projects", t: "Staff augmentation, on-prem delivery.", tags: ["High friction", "Isolated skillsets"] },
+    to: { k: "Cloud + AI Pods", t: "Cross-functional managed services.", tags: ["Agile pod structure", "AI-driven automation"] },
+    adoption: [
+      { k: "Certification %", t: "Target: ~70% by Year 2", tag: "Primary skill metric" },
+      { k: "Time-to-productivity", t: "For redeployed legacy staff", tag: "Accelerated onboarding" },
+      { k: "Engagement score", t: "Tracked via regular surveys", tag: "Continuous feedback" }
+    ]
+  },
+  roadmap: {
+    stages: [
+      { n: 1, k: "Assess", range: "M0 – M6", from: 0, to: 6, sub: "CCoE, dev/test, SaaS", pts: ["Establish Cloud Centre of Excellence (CCoE)", "Audit dev/test environments", "Evaluate SaaS platform readiness"] },
+      { n: 2, k: "Migrate", range: "M6 – M18", from: 6, to: 18, sub: "Core platform, AI build", pts: ["Migrate core platform workloads", "Build foundational AI infrastructure", "Initiate Wave 1 service transition"] },
+      { n: 3, k: "Transform", range: "M18 – M30", from: 18, to: 30, sub: "AI services, governance at scale", pts: ["Deploy production AI services", "Scale governance frameworks enterprise-wide", "Accelerate cloud-native adoption"] },
+      { n: 4, k: "Optimise", range: "M30 – M36", from: 30, to: 36, sub: "FinOps maturity, scale", pts: ["Achieve advanced FinOps maturity", "Maximise continuous cost efficiency", "Full organisational digital scale"] }
+    ],
+    outcomes: [
+      { v: "~20–25%", t: "Infra cost reduction", o: "CFO" },
+      { v: "Wks → Hrs", t: "Provisioning time", o: "COO" },
+      { v: "~80%", t: "Workloads migrated by Year 3", o: "CIO" },
+      { v: "New line", t: "AI service revenue", o: "CEO" },
+      { v: "~70%", t: "Workforce certified by Year 2", o: "CHRO" },
+      { v: "Downward", t: "Security incidents trend", o: "CISO" },
+      { v: "Improved", t: "Client NPS vs baseline", o: "Delivery" }
+    ],
+    decisions: [
+      { k: "Approve budget", t: "Approve the ₹25 crore investment within the 3-year envelope." },
+      { k: "Approve Azure partnership", t: "Azure as the primary cloud: core platform, AI/ML and identity integration." },
+      { k: "Approve CCoE charter", t: "The CCoE sets architecture standards and FinOps guardrails." },
+      { k: "Sponsor change programme", t: "Executive sponsorship for reskilling and the shift to Cloud + AI Pods." }
+    ],
+    approvers: ["CEO", "CFO", "COO", "CIO", "CHRO", "CISO", "Delivery leadership"],
+    recommendation: "Approve the ₹25 crore investment for a multi-cloud (Azure-primary), PaaS-led transformation via a 3-wave, 5R migration. Governed by a CCoE and FinOps to reposition ABC Technology Services as an AI-enabled digital services business."
+  }
+};
+
+/* ============================================================
+   SIMULATOR MODEL — transparent, illustrative formulas.
+   Every output equals the deck's stated figure at the
+   Board-recommended plan (BASE). Levers move outputs with
+   diminishing returns: pw(ratio, k) = ratio^k, k < 1.
+   ============================================================ */
+const BASE = {
+  budget: [40, 25, 10, 10, 10, 5],   // Migration, Infra/PaaS, Skills, AI build, Security/Gov, Contingency (% of ₹25 Cr)
+  cloud: [60, 25, 15],               // Azure, AWS, On-prem retained (% of footprint) — illustrative split of "Azure primary, AWS secondary, limited on-prem"
+  svc: [25, 55, 20],                 // IaaS, PaaS, SaaS (% of workloads) — illustrative split of "PaaS-led"
+  pace: "rec", reskill: "rec", finops: "adv"
+};
+const PACE = {
+  agg:  { name: "Aggressive",  ends: [5, 14, 30], mig: 1.08, sav: 1.03, pay: 0.93, dual: 1.15, y2: 0.50, sec: 0.94, cert: 0.94, cost: 8, breach: 8, skill: 10, sla: 22 },
+  rec:  { name: "Recommended", ends: [6, 18, 36], mig: 1.00, sav: 1.00, pay: 1.00, dual: 1.00, y2: 0.40, sec: 1.00, cert: 1.00, cost: 0, breach: 0, skill: 0, sla: 0 },
+  cons: { name: "Conservative", ends: [8, 22, 42], mig: 0.88, sav: 0.94, pay: 1.12, dual: 0.90, y2: 0.28, sec: 1.03, cert: 1.03, cost: 3, breach: -3, skill: -6, sla: -8 }
+};
+const RESK = { low: { name: "Light", m: 0.7, y1: -0.02 }, rec: { name: "Recommended", m: 1, y1: 0 }, high: { name: "Intensive", m: 1.3, y1: 0.04 } };
+const FIN = { off: { name: "Off", sav: 0.78, gov: 0.85, cost: 18, br: 10 }, basic: { name: "Basic", sav: 0.92, gov: 0.95, cost: 7, br: 4 }, adv: { name: "Advanced", sav: 1, gov: 1, cost: 0, br: 0 } };
+const REGISTER_BASE = [75, 75, 50, 50, 25];  // High, High, Med, Med, Low, as in the deck's risk register
+const RISK_NAMES = ["Cost overrun", "Multi-tenant data breach", "Skills gap delaying migration", "Vendor lock-in", "Client SLA disruption"];
+
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+const pw = (r, k) => Math.pow(Math.max(r, 0.05), k);
+const clone = (o) => JSON.parse(JSON.stringify(o));
+const level = (v) => (v >= 65 ? "high" : v >= 40 ? "med" : "low");
+
+/* Keep linked sliders summing to exactly 100. */
+function rebalance(arr, i, v) {
+  v = clamp(Math.round(v), 0, 100);
+  const others = arr.map((_, j) => j).filter((j) => j !== i);
+  const sumO = others.reduce((s, j) => s + arr[j], 0);
+  const rest = 100 - v;
+  const out = arr.slice();
+  out[i] = v;
+  others.forEach((j) => { out[j] = sumO === 0 ? rest / others.length : (arr[j] * rest) / sumO; });
+  const r = out.map((x) => Math.max(0, Math.round(x)));
+  let diff = 100 - r.reduce((s, x) => s + x, 0);
+  const order = others.slice().sort((a, b) => r[b] - r[a]);
+  let k = 0;
+  while (diff !== 0 && k < 200) {
+    const j = order.length ? order[k % order.length] : i;
+    const step = diff > 0 ? 1 : -1;
+    if (r[j] + step >= 0) { r[j] += step; diff -= step; }
+    k++;
+  }
+  return r;
+}
+
+function model(s) {
+  const [mig, inf, ski, ai, sec, cont] = s.budget;
+  const [az, aw, op] = s.cloud;
+  const [iaas, paas, saas] = s.svc;
+  const P = PACE[s.pace], R = RESK[s.reskill], F = FIN[s.finops];
+  const effSkill = ski * R.m;
+
+  const cert = clamp(70 * pw(effSkill / 10, 0.6) * P.cert, 4, 97);
+
+  let mg = 80 * ((100 - op) / 85) * pw(mig / 40, 0.5) * pw(inf / 25, 0.25) * P.mig;
+  mg = clamp(mg, 5, 100 - op - 2);
+
+  const migRel = mg / 80;
+  const plat = pw(inf / 25, 0.5) * pw(paas / 55, 0.45);
+  const prov = clamp(8 / plat / clamp(0.5 + 0.5 * migRel, 0.4, 1.1), 0.5, 504);
+
+  const paasF = 1 + 0.004 * (paas - 55);
+  const awsPen = aw > 25 ? 1 - 0.002 * (aw - 25) : 1;
+  const sav = clamp(22.5 * pw(migRel, 0.9) * paasF * F.sav * awsPen * P.sav * pw(inf / 25, 0.2), 2, 40);
+
+  const aiEff = pw(ai / 10, 0.25);
+  const pay = clamp(27 * pw(22.5 / sav, 0.7) / aiEff * P.pay * (1 + 0.03 * Math.max(0, 5 - cont)), 10, 60);
+
+  const legacy = [100, 104, 108];
+  const dual = 0.22 * pw(mig / 40, 0.5) * P.dual;
+  const s3 = sav / 100, s2 = s3 * P.y2;
+  const cloud = [100 * (1 + dual) * (1 + R.y1), legacy[1] * (1 - s2), legacy[2] * (1 - s3)];
+
+  const cloudPen = 1 - 0.003 * (aw - 25);
+  const secScore = pw(sec / 10, 0.7) * F.gov * pw(effSkill / 10, 0.2) * cloudPen * P.sec;
+  const secTrend = secScore >= 0.95 ? "down" : secScore >= 0.75 ? "flat" : "up";
+
+  const rv = [
+    75 - 4 * (cont - 5) + F.cost + P.cost,
+    75 - 4 * (sec - 10) + 0.35 * (aw - 25) + F.br + P.breach,
+    50 - 3 * (effSkill - 10) + P.skill,
+    50 - 1.1 * (aw - 25) + 0.25 * (paas - 55),
+    25 + P.sla + 0.25 * (mig - 40) - 0.3 * (op - 15) - 2 * (cont - 5)
+  ].map((v) => clamp(v, 3, 98));
+  const risks = rv.map((v, i) => ({ k: RISK_NAMES[i], v, base: REGISTER_BASE[i], lvl: level(v), up: v > REGISTER_BASE[i] + 8 }));
+  const avg = rv.reduce((a, b) => a + b, 0) / rv.length;
+  const posture = avg >= 62 ? "high" : avg >= 40 ? "med" : "low";
+
+  const provF = pw(8 / prov, 0.12);
+  const slaAdj = 1 - (rv[4] - 25) / 400;
+  const npsIdx = pw(ai / 10, 0.25) * provF * pw(secScore, 0.15) * slaAdj;
+  const nps = npsIdx >= 0.97 ? "up" : npsIdx >= 0.88 ? "flat" : "down";
+
+  return { cert, mg, prov, sav, pay, tco: { legacy, cloud }, secScore, secTrend, risks, avg, posture, npsIdx, nps, effSkill, dual, ends: P.ends };
+}
+
+/* ============================================================
+   APP — rendering, charts, scroll-spy, simulator UI
+   ============================================================ */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const rupee = (n) => "₹" + n.toFixed(2) + " Cr";
+
+/* ---------- nav, progress, scroll-spy ---------- */
+$("#mandate").textContent = DECK.mandate;
+$("#links").innerHTML = `<a href="#overview" data-s="overview"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="2" width="5" height="5" rx="1.2"/><rect x="9" y="2" width="5" height="5" rx="1.2"/><rect x="2" y="9" width="5" height="5" rx="1.2"/><rect x="9" y="9" width="5" height="5" rx="1.2"/></svg>Overview</a><a href="#simulator" data-s="simulator"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4.5h7M12 4.5h2M2 11.5h2M7 11.5h7"/><circle cx="10.5" cy="4.5" r="1.7"/><circle cx="5.5" cy="11.5" r="1.7"/></svg>Simulator</a>`;
+const linkEls = $$("#links a");
+function setActive(id) {
+  linkEls.forEach((a) => {
+    const on = a.dataset.s === id;
+    a.classList.toggle("on", on);
+    if (on) { a.setAttribute("aria-current", "true"); const L = $("#links"); L.scrollTo({ left: a.offsetLeft - L.clientWidth / 2 + a.clientWidth / 2, behavior: reduce ? "auto" : "smooth" }); }
+    else a.removeAttribute("aria-current");
+  });
+}
+if ("IntersectionObserver" in window) {
+  const io = new IntersectionObserver((es) => { es.forEach((e) => { if (e.isIntersecting) { setActive(e.target.id); } }); }, { rootMargin: "-42% 0px -52% 0px" });
+  $$("main section.sec").forEach((s) => io.observe(s));
+  const rio = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) e.target.classList.add("rise"); }), { threshold: 0.08 });
+  $$(".sec .sh, .sec .blk, .sec .grid").forEach((el) => rio.observe(el));
+}
+let ticking = false;
+addEventListener("scroll", () => {
+  if (ticking) return; ticking = true;
+  requestAnimationFrame(() => { const d = document.documentElement; const p = d.scrollTop / Math.max(1, d.scrollHeight - innerHeight); $("#prog").style.width = (p * 100).toFixed(1) + "%"; ticking = false; });
+}, { passive: true });
+
+/* ---------- tooltip ---------- */
+const tip = $("#tip");
+function placeTip(x, y) { const w = tip.offsetWidth, h = tip.offsetHeight; tip.style.left = Math.min(innerWidth - w - 8, Math.max(8, x + 12)) + "px"; tip.style.top = Math.max(8, y - h - 12) + "px"; }
+document.addEventListener("mouseover", (e) => { const t = e.target.closest("[data-tip]"); if (!t) { tip.classList.remove("on"); return; } tip.textContent = t.dataset.tip; tip.classList.add("on"); placeTip(e.clientX, e.clientY); });
+document.addEventListener("mousemove", (e) => { if (tip.classList.contains("on")) placeTip(e.clientX, e.clientY); });
+document.addEventListener("click", (e) => { const t = e.target.closest("[data-tip]"); if (t && matchMedia("(hover:none)").matches) { tip.textContent = t.dataset.tip; tip.classList.add("on"); placeTip(e.clientX, e.clientY); setTimeout(() => tip.classList.remove("on"), 2200); } });
+
+/* ---------- small builders ---------- */
+const chipFor = (s) => `<span class="chip ${s}">${s === "high" ? "High" : s === "med" ? "Med" : "Low"}</span>`;
+const dots = (n, cls) => `<span class="dots ${cls}" role="img" aria-label="${n} of 4">${[1, 2, 3, 4].map((i) => `<i class="${i <= n ? "f" : ""}"></i>`).join("")}</span>`;
+const goBtn = (preset, label) => `<button class="btn sm" type="button" data-preset="${preset}">${label} →</button>`;
+
+/* bars: fill / dot, optional target band, optional ghost marker */
+function barHTML(id, cfg) {
+  const band = cfg.band ? `<div class="band" style="left:${cfg.band[0]}%;width:${Math.max(cfg.band[1] - cfg.band[0], 1.4)}%"></div>` : "";
+  const mark = cfg.dot ? `<div class="dot" id="m-${id}"></div>` : `<div class="fill" id="m-${id}" style="width:0"></div>`;
+  const ax = cfg.axis.map(([p, l]) => `<span style="left:${p}%">${l}</span>`).join("");
+  return `<div class="bar" id="bar-${id}">${band}${mark}<div class="ghostm" id="g-${id}"></div></div><div class="axis" aria-hidden="true">${ax}</div>`;
+}
+function setBar(id, pos, ghost, cfg) {
+  const m = $("#m-" + id); if (!m) return;
+  if (cfg.dot) m.style.left = clamp(pos, 0, 100) + "%"; else m.style.width = clamp(pos, 0, 100) + "%";
+  if (cfg.dot) m.classList.toggle("warn", !!cfg.warn && cfg.warn(pos));
+  const b = $("#bar-" + id), g = $("#g-" + id);
+  if (ghost == null) b.classList.remove("pin"); else { b.classList.add("pin"); g.style.left = clamp(ghost, 0, 100) + "%"; }
+}
+const BARS = {
+  sav: { axis: [[0, "0%"], [25, "10%"], [50, "20%"], [75, "30%"], [100, "40%"]], band: [50, 62.5], max: 40 },
+  prov: { dot: true, band: [0, 51], axis: [[0, "1 hr"], [51, "1 day"], [82, "1 wk"], [100, "3 wks"]] },
+  pay: { dot: true, band: [50, 62.5], axis: [[0, "M0"], [25, "M12"], [50, "M24"], [75, "M36"], [100, "M48"]], warn: (p) => p > 75 },
+  mg: { axis: [[0, "0%"], [50, "50%"], [100, "100%"]], band: [79, 81], max: 100 },
+  cert: { axis: [[0, "0%"], [50, "50%"], [100, "100%"]], band: [69, 71], max: 100 }
+};
+const provPos = (h) => (Math.log(clamp(h, 1, 504)) / Math.log(504)) * 100;
+
+/* ---------- TCO chart (shared by Section 05 and the simulator) ---------- */
+function rbar(x, y, w, h, r) {
+  if (h <= 0) return "";
+  r = Math.min(r, h, w / 2);
+  return `M${x},${y + h}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h}Z`;
+}
+function tcoChart(t, g) {
+  const W = 600, H = 300, ml = 44, mr = 12, mt = 20, mb = 40;
+  const all = [...t.legacy, ...t.cloud, ...(g ? g.cloud : [])];
+  const ymax = Math.max(160, Math.ceil(Math.max(...all) / 40) * 40);
+  const y = (v) => mt + (1 - v / ymax) * (H - mt - mb);
+  const gw = (W - ml - mr) / 3, bw = 44, gap = 8;
+  let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Three-year annual cost index, legacy versus proposed cloud. Year 1 cloud ${t.cloud[0].toFixed(0)}, Year 2 ${t.cloud[1].toFixed(0)}, Year 3 ${t.cloud[2].toFixed(0)} against legacy 100, 104, 108.">`;
+  for (let v = 0; v <= ymax; v += 40) s += `<line x1="${ml}" x2="${W - mr}" y1="${y(v)}" y2="${y(v)}" style="stroke:var(--line);stroke-width:1"/><text x="${ml - 8}" y="${y(v) + 4}" text-anchor="end" font-size="11" style="fill:var(--ink3)">${v}</text>`;
+  for (let i = 0; i < 3; i++) {
+    const cx = ml + gw * i + gw / 2, x1 = cx - bw - gap / 2, x2 = cx + gap / 2;
+    const lv = t.legacy[i], cv = t.cloud[i];
+    s += `<path d="${rbar(x1, y(lv), bw, y(0) - y(lv), 4)}" style="fill:var(--slate)" data-tip="Year ${i + 1} · Legacy (do nothing): ${lv.toFixed(0)}"/>`;
+    s += `<path d="${rbar(x2, y(cv), bw, y(0) - y(cv), 4)}" style="fill:var(--blue)" data-tip="Year ${i + 1} · Cloud (proposed): ${cv.toFixed(0)}"/>`;
+    if (g) { const gv = g.cloud[i]; s += `<path d="${rbar(x2 + 2, y(gv), bw - 4, y(0) - y(gv), 3)}" style="fill:none;stroke:var(--ink);stroke-width:1.5;stroke-dasharray:4 3" data-tip="Year ${i + 1} · Scenario A cloud: ${gv.toFixed(0)}"/>`; }
+    s += `<text x="${x1 + bw / 2}" y="${y(lv) - 6}" text-anchor="middle" font-size="11" style="fill:var(--ink3)">${lv.toFixed(0)}</text>`;
+    s += `<text x="${x2 + bw / 2}" y="${y(cv) - 6}" text-anchor="middle" font-size="12" font-weight="600" style="fill:var(--ink)">${cv.toFixed(0)}</text>`;
+    s += `<text x="${cx}" y="${H - 14}" text-anchor="middle" font-size="12" style="fill:var(--ink2)">Year ${i + 1}</text>`;
+  }
+  s += `<line x1="${ml}" x2="${W - mr}" y1="${y(0)}" y2="${y(0)}" style="stroke:var(--line2)"/></svg>`;
+  return s;
+}
+const tcoLegend = (g) => `<div class="legendrow"><span><i style="background:var(--slate)"></i>Legacy (do nothing)</span><span><i style="background:var(--blue)"></i>Cloud (proposed)</span>${g ? '<span><i class="ghost"></i>Scenario A cloud</span>' : ""}</div>`;
+const tcoTable = (t) => `<details class="tbl"><summary>Table view</summary><table><thead><tr><th>Cost index</th><th>Year 1</th><th>Year 2</th><th>Year 3</th></tr></thead><tbody><tr><td>Legacy</td>${t.legacy.map((v) => `<td>${v.toFixed(0)}</td>`).join("")}</tr><tr><td>Cloud</td>${t.cloud.map((v) => `<td>${v.toFixed(0)}</td>`).join("")}</tr></tbody></table></details>`;
+
+/* ---------- Overview (short) ---------- */
+(function () {
+  const items = [
+    ["The problem", "On-prem, siloed delivery with little automation is costing ABC deals and margin."],
+    ["The strategy", "Multi-cloud and PaaS-led. Azure primary, AWS secondary, limited on-prem kept for data residency."],
+    ["The architecture", "Seven layers on standard landing zones. The Data & AI layer is the new revenue engine."],
+    ["The migration", "5Rs across three waves in 36 months, lowest risk first, with parallel-run and rollback."],
+    ["The economics", "₹25 Cr investment. Targets: 20–25% infra saving and a 24–30 month payback."],
+    ["Risk & governance", "Zero-trust, central IAM and FinOps, governed by a CCoE. Top risks: cost overrun and multi-tenant breach."],
+    ["People & change", "Reskill into five cloud and AI roles, ~70% certified by Year 2, and move to Cloud + AI Pods."],
+    ["The roadmap", "Assess, Migrate, Transform, Optimise over 36 months, with four Board decisions to open it."]
+  ];
+  const bud = DECK.econ.budget;
+  $("#ovBody").innerHTML = `
+  <div class="callout">${DECK.problem.statement}</div>
+  <div class="grid g4 blk">${items.map((x) => `<div class="card"><span class="eyebrow">${x[0]}</span><p style="margin-top:8px;color:var(--ink)">${x[1]}</p></div>`).join("")}</div>
+  <div class="blk card"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><h3>Where the ₹25 Cr goes</h3><span class="tag">Illustrative</span></div>
+    <div style="display:flex;gap:3px;margin-top:16px;height:14px" role="img" aria-label="Budget allocation">${bud.map((b) => `<div style="flex:${b.pct};background:${b.c};border-radius:4px" data-tip="${b.k}: ${b.pct}% · ${rupee(b.pct * 25 / 100)}"></div>`).join("")}</div>
+    <div class="legendrow" style="margin-top:14px;gap:8px 18px">${bud.map((b) => `<span><i style="background:${b.c}"></i>${b.k} ${b.pct}%</span>`).join("")}</div></div>
+  <div class="blk card"><span class="eyebrow">The Board is asked to</span><div class="dec">${DECK.roadmap.decisions.map((d, i) => `<span class="dbtn" style="cursor:default"><b>${i + 1}</b>${d.k}</span>`).join("")}</div></div>`;
+})();
+
+/* ============================================================
+   SIMULATOR UI
+   ============================================================ */
+let S = clone(BASE), pinned = null, compare = false;
+const baseOut = model(BASE);
+const PRESETS = {
+  awsfirst: { cloud: [25, 60, 15] },
+  finopsoff: { finops: "off" },
+  iaas: { svc: [45, 35, 20] },
+  cons: { pace: "cons" },
+  lowsec: { budget: [42, 27, 11, 11, 2, 7] },
+  lightskills: { reskill: "low", budget: [42, 27, 5, 11, 10, 5] },
+  intensive: { reskill: "high" }
+};
+const GROUPS = [
+  { key: "budget", title: "Budget allocation · ₹25 Cr", labels: ["Migration", "Infra / PaaS", "Skills", "AI build", "Security / Governance", "Contingency"], max: 70, fmt: (v) => `${v}% · ${rupee((v * 25) / 100)}`, hint: "Six linked sliders. Moving one rebalances the rest so the total stays ₹25 Cr." },
+  { key: "cloud", title: "Cloud mix", labels: ["Azure (primary)", "AWS (secondary)", "On-prem retained"], max: 100, fmt: (v) => v + "%", hint: "" },
+  { key: "svc", title: "Service model blend", labels: ["IaaS", "PaaS", "SaaS"], max: 100, fmt: (v) => v + "%", hint: "PaaS is the primary focus. IaaS bridges legacy and regulated workloads; SaaS serves internal functions (Section 02)." }
+];
+const seg = (name, opts, cur) => `<div class="seg" role="radiogroup">${opts.map(([v, l]) => `<span><input type="radio" name="${name}" id="${name}-${v}" value="${v}" ${v === cur ? "checked" : ""}><label for="${name}-${v}">${l}</label></span>`).join("")}</div>`;
+
+$("#levers").innerHTML =
+  GROUPS.map((g) => `<fieldset class="lever"><legend>${g.title}</legend>${g.labels.map((l, i) => `<div class="sl"><label for="sl-${g.key}-${i}">${l}</label><output id="o-${g.key}-${i}" for="sl-${g.key}-${i}"></output><input type="range" id="sl-${g.key}-${i}" data-key="${g.key}" data-i="${i}" min="0" max="${g.max}" step="1"></div>`).join("")}<p class="hint" id="hint-${g.key}">${g.hint}</p></fieldset>`).join("") +
+  `<fieldset class="lever"><legend>Migration pace</legend>${seg("pace", [["agg", "Aggressive"], ["rec", "Recommended"], ["cons", "Conservative"]], S.pace)}
+    <div class="pace"><div class="track" id="paceTrack"></div><small aria-hidden="true"><span>M0</span><span id="paceEnd"></span><span>M42</span></small></div><p class="hint" id="hint-pace"></p></fieldset>
+  <fieldset class="lever"><legend>Reskilling intensity</legend>${seg("reskill", [["low", "Light"], ["rec", "Recommended"], ["high", "Intensive"]], S.reskill)}<p class="hint" id="hint-reskill"></p></fieldset>
+  <fieldset class="lever"><legend>FinOps maturity</legend>${seg("finops", [["off", "Off"], ["basic", "Basic"], ["adv", "Advanced"]], S.finops)}<p class="hint" id="hint-finops"></p></fieldset>`;
+
+const tile = (id, label, unit, extra) => `<article class="tile" id="t-${id}"><div class="hd"><span class="eyebrow">${label}</span><span class="dl" id="d-${id}">–</span></div><div class="val"><b id="v-${id}">–</b><span class="u" id="u-${id}">${unit}</span><span class="pinv" id="p-${id}"></span></div>${extra}<p class="why" id="w-${id}"></p></article>`;
+const stateTile = (id, label, extra) => `<article class="tile" id="t-${id}"><div class="hd"><span class="eyebrow">${label}</span><span class="dl" id="d-${id}">–</span></div><div class="state"><span id="a-${id}"></span><b id="v-${id}">–</b><span class="pinv" id="p-${id}"></span></div>${extra || ""}<p class="why" id="w-${id}"></p></article>`;
+$("#outs").innerHTML = `
+  <div class="card"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><h3>3-year TCO curve</h3><span class="tag">Illustrative estimate</span></div>
+    <div id="tcoBox" style="margin-top:12px"></div><p class="eyebrow" style="margin-top:10px">Annual cost index, Year 1 legacy = 100</p><p class="why" id="w-tco" style="color:var(--ink2);font-size:13px;margin-top:8px"></p></div>
+  <div class="tiles">
+    ${tile("sav", "Infra cost reduction", "% by Year 3", barHTML("sav", BARS.sav) + '<p class="eyebrow" style="margin-top:10px">Target band 20–25%</p>')}
+    ${tile("prov", "Provisioning time", "", barHTML("prov", BARS.prov) + '<p class="eyebrow" style="margin-top:10px">Weeks today → hours (shaded)</p>')}
+    ${tile("pay", "Estimated payback", "months", barHTML("pay", BARS.pay) + '<p class="eyebrow" style="margin-top:10px">Target band 24–30 months</p>')}
+    ${tile("mg", "Workloads migrated by Year 3", "%", barHTML("mg", BARS.mg) + '<p class="eyebrow" style="margin-top:10px">Target ~80%</p>')}
+    ${tile("cert", "Workforce certified by Year 2", "%", barHTML("cert", BARS.cert) + '<p class="eyebrow" style="margin-top:10px">Target ~70%</p>')}
+    ${stateTile("sec", "Security incident trend", '<p class="eyebrow" style="margin-top:10px">Deck target: downward</p>')}
+    ${stateTile("nps", "Client NPS direction", '<p class="eyebrow" style="margin-top:10px">Deck target: improved vs baseline</p>')}
+    ${stateTile("post", "Risk posture", '<p class="eyebrow" style="margin-top:10px" id="postSub"></p>')}
+  </div>
+  <div class="card"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><h3>Risk register, live</h3><span class="tag">Illustrative estimate</span></div>
+    <p style="margin:6px 0 10px;font-size:13px;color:var(--ink2)">Bars show each risk's current exposure. The white tick marks the deck's register severity.</p><div id="regBox"></div></div>`;
+
+/* count-up */
+function tw(el, to, fmt) {
+  if (typeof el === "string") el = $(el); if (!el) return;
+  const from = el._v == null ? to : el._v; el._v = to;
+  cancelAnimationFrame(el._raf);
+  if (reduce || from === to) { el.textContent = fmt(to); return; }
+  const t0 = performance.now();
+  const step = (t) => { const p = Math.min(1, (t - t0) / 450), e = 1 - Math.pow(1 - p, 3); el.textContent = fmt(from + (to - from) * e); if (p < 1) el._raf = requestAnimationFrame(step); };
+  el._raf = requestAnimationFrame(step);
+}
+function hrsParts(h) { return h < 48 ? [1, "hrs"] : h < 336 ? [24, "days"] : [168, "wks"]; }
+const numFor = (div) => (v) => { const x = v / div; return div === 1 ? (x < 10 ? x.toFixed(1) : String(Math.round(x))) : x.toFixed(1); };
+
+const arrowSVG = (kind, color) => {
+  const d = kind === "flat" ? "M9 17h16" : "M17 9v16M10 18l7 7 7-7";
+  const rot = kind === "up" ? "rotate(180 17 17)" : "";
+  return `<svg class="arrow" viewBox="0 0 34 34" aria-hidden="true" style="color:${color}"><circle cx="17" cy="17" r="16" fill="none" stroke="currentColor" opacity=".35"/><path d="${d}" transform="${rot}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+};
+function setDelta(id, diff, unit, goodDir, dig, rl) {
+  const el = $("#d-" + id), a = Math.abs(diff);
+  if (a < Math.pow(10, -dig) / 2) { el.textContent = "On " + rl; el.className = "dl"; return; }
+  el.textContent = (diff > 0 ? "▲ +" : "▼ −") + a.toFixed(dig) + unit + " vs " + rl;
+  el.className = "dl " + (diff * goodDir > 0 ? "good" : "bad");
+}
+function setRank(id, diff, rl) {
+  const el = $("#d-" + id);
+  if (diff === 0) { el.textContent = "On " + rl; el.className = "dl"; } else { el.textContent = (diff > 0 ? "▲ Better than " : "▼ Worse than ") + rl; el.className = "dl " + (diff > 0 ? "good" : "bad"); }
+}
+const setPin = (id, txt) => { const el = $("#p-" + id); el.textContent = txt == null ? "" : "A: " + txt; el.classList.toggle("on", txt != null); };
+const HRS = (h) => { const [d, u] = hrsParts(h); return numFor(d)(h) + " " + u; };
+
+/* plain-English "why" lines, each tied to a deck section */
+function whyLines(o, s) {
+  const [mig, inf, ski, ai, sec, cont] = s.budget, [az, aw, op] = s.cloud, paas = s.svc[1];
+  const W = {};
+  W.sav = s.finops !== "adv" ? `FinOps is set to ${FIN[s.finops].name.toLowerCase()}. Tagging, budgets and rightsizing reviews are what hold the 20–25% saving (Section 05).`
+    : paas < 45 ? "A lighter PaaS share leaves more workloads on IaaS, which keeps more run cost. PaaS is the core modernisation driver (Section 02)."
+    : aw > 40 ? "A heavier AWS footprint lowers lock-in but adds a second platform to run, trimming savings (Section 02)."
+    : o.mg < 72 ? "Fewer workloads reach the cloud by Year 3, so less legacy maintenance is retired (Section 04)."
+    : op > 25 ? "More retained on-prem keeps legacy run cost in the base (Section 02)."
+    : o.sav > baseOut.sav + 1.5 ? "Stronger migration and platform spend retire legacy maintenance faster (Section 05)."
+    : "Savings come from retiring legacy maintenance as workloads move to PaaS. The plan targets 20–25% by Year 3 (Section 05).";
+  W.prov = inf < 18 ? "Less Infra / PaaS spend slows the self-service platform that turns weeks into hours (Section 03)."
+    : paas < 45 ? "With less PaaS, environments lean on manual IaaS builds. DevOps automation is a PaaS benefit (Section 02)."
+    : o.prov > 24 ? "Provisioning is drifting out of the hours zone (Section 05)."
+    : "IaC, CI/CD and environment self-service on standard landing zones compress provisioning from weeks to hours (Section 03).";
+  W.pay = s.pace === "cons" ? "A slower pace stretches dual-running of legacy and cloud, which delays break-even (Section 04)."
+    : s.pace === "agg" ? "Compressing the waves brings savings forward, but raises SLA and skills risk below (Section 04)."
+    : s.finops !== "adv" ? "Weaker FinOps lowers the saving and pushes payback out (Section 05)."
+    : ai < 6 ? "A thinner AI build delays the new AI-services revenue line that helps repay the investment (Section 05)."
+    : cont < 3 ? "With little contingency, overruns land directly on payback (Section 05)."
+    : "Payback lands inside the deck's 24–30 month target when savings ramp from Year 2 (Section 05).";
+  W.mg = op > 25 ? `More retained on-prem caps what can move: only ${100 - op}% of workloads are eligible (Section 02).`
+    : s.pace === "cons" ? "A slower pace leaves more workloads in Wave 3 at the 36-month mark (Section 04)."
+    : s.pace === "agg" ? "Compressed waves move more workloads inside 36 months (Section 04)."
+    : mig < 30 ? "A smaller migration budget moves fewer workloads by Year 3 (Section 05)."
+    : "Waves 1–3 move workloads in risk order, leaving HR / Payroll and regulated systems for later (Section 04).";
+  W.cert = s.reskill === "low" || ski < 7 ? "Light reskilling investment slows certification against the ~70% Year 2 target (Section 07)."
+    : s.reskill === "high" || ski > 13 ? "More reskilling effort lifts certification, with diminishing returns (Section 07)."
+    : "Associate to Professional tracks, bootcamps and AI/ML cohorts drive the ~70% Year 2 target (Section 07).";
+  W.sec = sec < 7 ? "Under-funded security and governance weakens segmentation and monitoring, so incidents trend up (Section 06)."
+    : s.finops === "off" ? "Without FinOps and governance guardrails, control drift raises incident risk (Section 06)."
+    : aw > 40 ? "More clouds mean more identities to govern. Identity sprawl is a named risk (Section 06)."
+    : s.pace === "agg" ? "Rushed cutovers leave less time for periodic access reviews (Section 06)."
+    : "Zero-trust segmentation, centralised IAM and CASB/SIEM monitoring bend the incident trend down (Section 06).";
+  W.nps = o.nps === "up" ? "Cloud-native AI services, fast provisioning and stable SLAs are what clients say they expect (Section 01)."
+    : "Client experience depends on fast provisioning, a live AI offer and stable SLAs. One of them is weakening (Sections 01 and 06).";
+  const up = o.risks.filter((r) => r.up).map((r) => r.k);
+  W.post = up.length ? `${up.join(" and ")} ${up.length > 1 ? "are" : "is"} above the deck's register severity. Each has a named mitigation in Section 06.` : "Risk sits at the deck's register levels, each with a named mitigation (Section 06).";
+  W.tco = `Year 1 runs ${(o.tco.cloud[0] - 100).toFixed(0)}% above legacy from dual-running. Year 3 lands ${(o.sav).toFixed(1)}% below the legacy curve, where the deck targets 20–25% (Sections 04 and 05).`;
+  return W;
+}
+function hints(s) {
+  const [az, aw, op] = s.cloud;
+  $("#hint-cloud").textContent = aw > az ? "AWS-led mix: lock-in risk falls, but you give up Azure's edge on hybrid tooling fit (4 vs 3) and cost predictability (3 vs 2), per Section 02."
+    : aw > 40 ? "A heavier AWS weighting reduces lock-in but slightly raises cost predictability uncertainty, per the Section 02 evaluation criteria."
+    : "Azure primary scores higher on hybrid tooling fit and cost predictability. AWS keeps resilience and avoids lock-in. On-prem is retained for data residency (Section 02).";
+  const P = PACE[s.pace];
+  $("#hint-pace").textContent = { agg: "Waves end M5 / M14 / M30. Savings arrive sooner, but SLA and skills risk rise.", rec: "Waves end M6 / M18 / M36, the deck's plan.", cons: "Waves end M8 / M22 / M42. The last wave runs past the Board's 36-month window." }[s.pace];
+  $("#paceEnd").textContent = "M" + P.ends[2] + " last wave ends";
+  $("#hint-reskill").textContent = "Multiplies the effect of the Skills budget. Intensive adds about 4% to Year 1 cost for backfill; Light trims about 2%.";
+  $("#hint-finops").textContent = { off: "No tagging, chargeback or budget alerts. Cost overrun and breach risks rise (Section 06).", basic: "Tagging and budgets only, without savings plans or CCoE rightsizing reviews.", adv: "Tagging, chargeback, budgets, savings plans and regular CCoE rightsizing reviews (Section 05)." }[s.finops];
+}
+function paceTrack(s) {
+  const e = PACE[s.pace].ends, TOTAL = 42, segs = [];
+  const add = (len, bg, tip) => len > 0 && segs.push(`<div style="flex:${len} 1 0;background:${bg}" data-tip="${tip}"></div>`);
+  add(e[0], "#8fcaff", `Wave 1 · M0–M${e[0]}`);
+  add(e[1] - e[0], "#3ea6ff", `Wave 2 · M${e[0]}–M${e[1]}`);
+  if (e[2] <= 36) add(e[2] - e[1], "#2a72b5", `Wave 3 · M${e[1]}–M${e[2]}`);
+  else { add(36 - e[1], "#2a72b5", `Wave 3 · M${e[1]}–M36`); add(e[2] - 36, "#ffb84d", `Beyond the 36-month window · M36–M${e[2]}`); }
+  add(TOTAL - e[2], "transparent", "");
+  $("#paceTrack").innerHTML = segs.join("") + `<span class="win" style="left:${(36 / TOTAL) * 100}%" aria-hidden="true"></span>`;
+}
+
+function syncSliders() {
+  GROUPS.forEach((g) => S[g.key].forEach((v, i) => {
+    const inp = $(`#sl-${g.key}-${i}`); inp.value = v; inp.style.setProperty("--p", (v / g.max) * 100 + "%");
+    $(`#o-${g.key}-${i}`).textContent = g.fmt(v); inp.setAttribute("aria-valuetext", g.fmt(v));
+  }));
+  ["pace", "reskill", "finops"].forEach((n) => { const r = $(`#${n}-${S[n]}`); if (r) r.checked = true; });
+}
+
+function update() {
+  const o = model(S), ref = compare && pinned ? pinned : baseOut, rl = compare && pinned ? "A" : "plan", pn = compare && pinned ? pinned : null;
+  const W = whyLines(o, S); hints(S); paceTrack(S);
+
+  /* sticky strip */
+  tw("#ss-sav", o.sav, (v) => v.toFixed(1) + "%");
+  { const [d, u] = hrsParts(o.prov), f = numFor(d); tw("#ss-prov", o.prov, (v) => f(v) + " " + u); }
+  tw("#ss-pay", o.pay, (v) => v.toFixed(0) + " mo");
+  tw("#ss-mg", o.mg, (v) => v.toFixed(0) + "%");
+  tw("#ss-cert", o.cert, (v) => v.toFixed(0) + "%");
+
+  /* numeric tiles */
+  tw("#v-sav", o.sav, (v) => v.toFixed(1)); setDelta("sav", o.sav - ref.sav, " pts", 1, 1, rl); setPin("sav", pn && pn.sav.toFixed(1) + "%"); setBar("sav", (o.sav / 40) * 100, pn && (pn.sav / 40) * 100, BARS.sav);
+  { const [d, u] = hrsParts(o.prov); tw("#v-prov", o.prov, numFor(d)); $("#u-prov").textContent = u; setDelta("prov", ((o.prov - ref.prov) / ref.prov) * 100, "%", -1, 0, rl); setPin("prov", pn && HRS(pn.prov)); setBar("prov", provPos(o.prov), pn && provPos(pn.prov), BARS.prov); }
+  tw("#v-pay", o.pay, (v) => v.toFixed(1)); setDelta("pay", o.pay - ref.pay, " mo", -1, 1, rl); setPin("pay", pn && pn.pay.toFixed(1) + " mo"); setBar("pay", (o.pay / 48) * 100, pn && (pn.pay / 48) * 100, BARS.pay);
+  tw("#v-mg", o.mg, (v) => v.toFixed(0)); setDelta("mg", o.mg - ref.mg, " pts", 1, 1, rl); setPin("mg", pn && pn.mg.toFixed(0) + "%"); setBar("mg", o.mg, pn && pn.mg, BARS.mg);
+  tw("#v-cert", o.cert, (v) => v.toFixed(0)); setDelta("cert", o.cert - ref.cert, " pts", 1, 1, rl); setPin("cert", pn && pn.cert.toFixed(0) + "%"); setBar("cert", o.cert, pn && pn.cert, BARS.cert);
+
+  /* state tiles */
+  const rk = { down: 2, flat: 1, up: 0 }, rkN = { up: 2, flat: 1, down: 0 }, rkP = { low: 2, med: 1, high: 0 };
+  const secTxt = { down: "Downward", flat: "Flat", up: "Upward" }, npsTxt = { up: "Improved", flat: "Flat", down: "Declining" }, postTxt = { low: "Low", med: "Medium", high: "High" };
+  const col = (good) => (good === 2 ? "var(--green)" : good === 1 ? "var(--ink2)" : "var(--amber)");
+  $("#v-sec").textContent = secTxt[o.secTrend]; $("#a-sec").innerHTML = arrowSVG(o.secTrend === "down" ? "down" : o.secTrend === "up" ? "up" : "flat", col(rk[o.secTrend])); setRank("sec", rk[o.secTrend] - rk[ref.secTrend], rl); setPin("sec", pn && secTxt[pn.secTrend]);
+  $("#v-nps").textContent = npsTxt[o.nps]; $("#a-nps").innerHTML = arrowSVG(o.nps === "up" ? "up" : o.nps === "down" ? "down" : "flat", col(rkN[o.nps])); setRank("nps", rkN[o.nps] - rkN[ref.nps], rl); setPin("nps", pn && npsTxt[pn.nps]);
+  $("#v-post").textContent = postTxt[o.posture]; $("#a-post").innerHTML = `<span class="chip ${o.posture}" style="font-size:11px">${o.posture === "high" ? "High" : o.posture === "med" ? "Med" : "Low"}</span>`; setRank("post", rkP[o.posture] - rkP[ref.posture], rl); setPin("post", pn && postTxt[pn.posture]);
+  $("#postSub").textContent = o.risks.filter((r) => r.up).length + " of 5 risks above register severity";
+
+  ["sav", "prov", "pay", "mg", "cert", "sec", "nps", "post"].forEach((k) => ($("#w-" + k).textContent = W[k]));
+  $("#w-tco").textContent = W.tco;
+
+  /* TCO chart */
+  $("#tcoBox").innerHTML = tcoChart(o.tco, pn && pn.tco) + tcoLegend(pn) + tcoTable(o.tco);
+
+  /* risk register */
+  $("#regBox").innerHTML = o.risks.map((r, i) => {
+    const p = pn && pn.risks[i];
+    return `<div class="regrow"><div><b style="color:var(--ink)">${r.k}</b><div class="mit">${DECK.risk.register[i].m}</div></div>${chipFor(r.lvl)}<div class="rbar" role="img" aria-label="${r.k} exposure ${Math.round(r.v)} of 100"><i class="${r.up ? "hi" : ""}" style="width:${r.v}%"></i><u style="left:${r.base}%" title="Register severity"></u></div><span class="eyebrow" style="text-align:right">${p ? "A: " + (p.lvl === "high" ? "High" : p.lvl === "med" ? "Med" : "Low") : r.up ? "▲ above register" : r.v < r.base - 8 ? "▼ below register" : "at register"}</span></div>`;
+  }).join("");
+
+  /* compare UI */
+  $("#cmpBtn").setAttribute("aria-pressed", String(compare));
+  $("#repinBtn").hidden = !compare; $("#cmpNote").hidden = !compare;
+}
+
+/* wiring */
+$("#levers").addEventListener("input", (e) => {
+  const t = e.target;
+  if (t.type === "range") { S[t.dataset.key] = rebalance(S[t.dataset.key], +t.dataset.i, +t.value); syncSliders(); }
+  else if (t.type === "radio") S[t.name] = t.value;
+  update();
+});
+$("#resetBtn").addEventListener("click", () => { S = clone(BASE); syncSliders(); update(); });
+$("#cmpBtn").addEventListener("click", () => { compare = !compare; pinned = compare ? model(S) : null; update(); });
+$("#repinBtn").addEventListener("click", () => { pinned = model(S); update(); });
+function applyPreset(name) {
+  if (!PRESETS[name]) return;
+  S = Object.assign(clone(BASE), clone(PRESETS[name])); syncSliders(); update();
+  $("#simulator").scrollIntoView({ behavior: reduce ? "auto" : "smooth" });
+}
+document.addEventListener("click", (e) => { const b = e.target.closest("[data-preset]"); if (b) applyPreset(b.dataset.preset); });
+
+syncSliders(); update();
+
+/* ============================================================
+   ASK THE DECK — retrieval over this proposal only.
+   Every answer is written from the deck (and its presenter
+   notes). Anything else gets a friendly redirect.
+   ============================================================ */
+const SEC = { "00": "Overview", "01": "Section 01 — The Problem", "02": "Section 02 — The Strategy", "03": "Section 03 — The Architecture", "04": "Section 04 — The Migration", "05": "Section 05 — The Economics", "06": "Section 06 — Risk & Governance", "07": "Section 07 — People & Change", "08": "Section 08 — Roadmap & Outcomes" };
+const KB = [];
+const E = (id, sec, keys, a, act, rel) => KB.push({ id, sec, keys, a, act, rel: rel || [] });
+
+E("overview", "00", ["what is this", "overview", "summary", "summarise", "summarize", "mandate", "about this", "about the deck", "tell me about", "the project", "the proposal", "what is the plan", "big picture"],
+  `<p>The deck proposes a <b>multi-cloud, PaaS-led transformation</b> of ABC Technology Services, anchored on DevOps, an AI/data platform and workforce reskilling. The aim is to turn a cost-centre IT shop into a scalable, margin-accretive AI-enabled digital services and GCC business, inside the Board's <b>₹25 crore, 3-year envelope</b>.</p><p>It runs in 3 migration waves over 36 months, governed by a CCoE and FinOps.</p>`, null, ["board", "problem", "roadmap"]);
+E("board", "08", ["board", "approve", "approval", "decision", "decisions", "board ask", "asked to approve", "being asked", "recommendation", "final recommendation"],
+  `<p>The Board is asked for four decisions: <b>(1)</b> approve the ₹25 Cr budget, <b>(2)</b> approve the Azure partnership, <b>(3)</b> approve the CCoE charter, and <b>(4)</b> sponsor the change programme.</p><p>Approvers named in the deck: CEO, CFO, COO, CIO, CHRO, CISO and Delivery leadership.</p>`, null, ["allocation", "roadmap", "illustrative"]);
+E("illustrative", "08", ["illustrative", "assumption", "how accurate", "are these real", "estimate", "estimates", "how reliable", "real numbers"],
+  `<p>The deck states that <b>all figures are illustrative assumptions</b>. The simulator follows the same rule: it uses simple, transparent formulas calibrated so the Board-recommended plan lands on the deck's stated targets, and every chart carries an "illustrative estimate" tag.</p>`, null, ["simulator", "assumptions"]);
+E("problem", "01", ["problem", "problem statement", "why change", "pain", "pain points", "challenge", "challenges", "legacy", "current situation", "present situation", "business context", "current state", "issues"],
+  `<p>The governing problem: <b>ABC cannot win or retain higher-value, AI-enabled digital services engagements, or protect delivery margins, while running on legacy, siloed infrastructure with limited automation.</b></p><p>Today's realities: on-prem / VM-based delivery, a fragmented application landscape per client, low analytics maturity (spreadsheets), inconsistent DevOps, and ageing infrastructure with rising maintenance cost.</p>`, null, ["stakeholders", "why cloud", "readiness"]);
+E("stakeholders", "01", ["stakeholder", "stakeholders", "ceo", "cfo", "cio", "cto", "coo", "engineers", "clients", "who is affected", "impact", "impacts"],
+  `<p>Stakeholder impacts in the deck: <b>CEO</b> is losing deals to rivals; <b>CFO</b> faces margin erosion and capex spend; <b>CIO/CTO</b> carries tech debt and security exposure; <b>COO/Delivery</b> sees slow provisioning and SLA risk; <b>Engineers</b> do manual, repetitive toil; <b>Clients</b> expect cloud-native AI; <b>Risk & Compliance</b> worry about multi-tenancy data risk.</p>`, null, ["urgent", "problem"]);
+E("urgent", "01", ["most urgent", "urgent", "which stakeholder", "priority stakeholder", "whose concern"],
+  `<p>The CFO's concern, <b>margin erosion and capex spend</b>, is marked most urgent. It is the forcing function: if margins do not improve, the funding case for everything else disappears. That is why FinOps and the payback target feature so prominently.</p>`, { label: "See the FinOps lever", preset: "finopsoff" }, ["finops", "payback"]);
+E("whycloud", "01", ["why cloud", "instead of cloud", "why not upgrade", "just upgrade", "upgrade existing", "upgrading", "why not simply upgrade"],
+  `<p>Upgrading legacy infrastructure only fixes capacity and reliability. It does not give elastic scalability, does not build the AI/data platform needed for new revenue, and does not solve skills and talent competitiveness. Cloud is the path that solves the <b>business</b> problem (margin and growth), not just the technical one.</p>`, null, ["problem", "objectives"]);
+E("different", "01", ["how is this different", "different from other", "other companies", "services company", "unique", "why is legacy different"],
+  `<p>For a services company, IT infrastructure is not a support function, it is the product. Slow, manual provisioning throttles billable delivery and client satisfaction directly, unlike a manufacturer where IT is a cost centre behind production.</p>`, null, ["problem"]);
+E("objectives", "02", ["objective", "objectives", "goals", "aims", "strategic objectives", "what are we trying"],
+  `<p>Three objectives: <b>Modernise platform</b> (cut cost-to-serve, compress provisioning from weeks to hours), <b>Build AI & data</b> (launch new AI services, raise revenue per engagement), and <b>Governed multi-cloud</b> (an operating model with FinOps to protect margins).</p>`, null, ["readiness", "service models"]);
+E("readiness", "02", ["readiness", "ready", "maturity", "foundational", "assessment", "cloud readiness", "low readiness"],
+  `<p>The readiness snapshot: Applications <b>Low-Med</b> (monolithic), Data <b>Low</b> (siloed, spreadsheets), Security <b>Med</b> (perimeter-based), Skills <b>Low</b> (small pockets), Governance <b>Low</b> (no unified CCoE).</p><p>Conclusion: <b>foundational stage, phased transformation required.</b> Being honest about low readiness is what justifies three waves instead of a big-bang move.</p>`, null, ["waves", "outsource"]);
+E("models", "02", ["service model", "service models", "iaas", "paas", "saas", "blend", "what is paas", "what is iaas", "what is saas", "infrastructure as a service", "platform as a service"],
+  `<p>The blend is <b>IaaS / PaaS / SaaS</b> with PaaS as the primary focus:</p><p><b>IaaS</b> bridges legacy and regulated client workloads (lift-and-shift first, no risky Day 1 re-architecture). <b>PaaS</b> is the core driver for modernisation and new AI services; it accelerates DevOps and CI/CD and removes infrastructure toil. <b>SaaS</b> covers internal ITSM, HRMS and collaboration.</p>`, { label: "Try an IaaS-heavy blend", preset: "iaas" }, ["whypaas", "azure"]);
+E("whypaas", "02", ["all in on paas", "all-in on paas", "why not paas", "paas immediately", "bridge", "why not just paas", "go all in"],
+  `<p>Some workloads, such as the legacy ERP and certain regulated client systems, are not PaaS-ready without significant refactoring risk. <b>IaaS is a deliberate bridge</b> for those, not a permanent state. That is why the 5Rs show ERP as rehost now, refactor later.</p>`, { label: "Try an IaaS-heavy blend", preset: "iaas" }, ["5rs", "models"]);
+E("azure", "02", ["why azure", "azure primary", "azure", "primary cloud", "evaluation criteria", "criteria", "scoring", "provider selection", "which cloud", "aws secondary", "why aws", "secondary cloud"],
+  `<p><b>Azure is primary</b>: the core platform for enterprise apps, AI/ML services and identity integration. <b>AWS is secondary</b>: resilience and diversity, avoiding vendor lock-in and supporting specialised workloads.</p><p>The scoring (out of 4, Azure vs AWS): hybrid tooling fit <b>4 vs 3</b>, AI/ML maturity <b>4 vs 4</b>, India regions/compliance <b>3 vs 3</b>, talent in India <b>3 vs 3</b>, cost predictability <b>3 vs 2</b>. The presenter notes add Azure's fit with ABC Group's existing Microsoft ecosystem.</p>`, { label: "Try an AWS-led mix", preset: "awsfirst" }, ["awsfirst", "multicloud"]);
+E("awsfirst", "02", ["aws first", "aws-first", "aws primary", "instead of azure", "switch to aws", "swap azure", "reverse the", "go aws", "aws led", "aws-led", "what if aws"],
+  `<p>Going AWS-first would trade away Azure's lead on <b>hybrid tooling fit (4 vs 3)</b> and <b>cost predictability (3 vs 2)</b>. AI/ML maturity, India regions and talent score the same. On the plus side it lowers vendor lock-in, a Medium risk in the register.</p><p>Try it in the simulator to see the effect on savings, payback and risk.</p>`, { label: "Try it in the Simulator", preset: "awsfirst" }, ["azure", "lockin"]);
+E("multicloud", "02", ["complexity", "multi cloud", "multicloud", "multi-cloud", "duplicate", "standardise", "standardize", "isn't multi cloud", "more complex"],
+  `<p>Yes, multi-cloud adds complexity. The mitigation is to standardise DevOps tooling and IaC <b>across</b> clouds, so engineers work with common pipelines rather than duplicated skill silos. Multi-cloud is especially justified for a GCC because clients have their own cloud preferences.</p>`, { label: "Try an AWS-led mix", preset: "awsfirst" }, ["azure", "landing"]);
+E("onprem", "02", ["on prem", "on-prem", "on premises", "on-premises", "data residency", "retain on", "sovereign", "retained on prem"],
+  `<p>On-premises is retained <b>strictly and in limited form</b>, for sovereign data-residency requirements and legacy compliance. It links to the cloud landing zones through ExpressRoute / VPN in the Connectivity layer.</p>`, null, ["layers"]);
+E("outsource", "02", ["outsource", "systems integrator", "msp", "partner support", "si ", "whole migration"],
+  `<p>Partner / MSP support is recommended for skills gaps in Wave 1, but the <b>CCoE and core architecture ownership stay in-house</b>. ABC's differentiation depends on owning its cloud and AI capability, not renting it permanently.</p>`, null, ["skillsgap", "readiness"]);
+E("pillars", "03", ["pillar", "pillars", "three pillars"],
+  `<p>Three pillars: <b>Multi-Cloud Foundation</b> (Azure primary, AWS secondary), <b>Data & AI Engine</b> (centralised analytics and MLOps, the new revenue engine), and <b>Modular Service Layers</b> (client delivery, security and SaaS).</p>`, null, ["layers"]);
+E("layers", "03", ["layer", "layers", "seven layers", "7 layers", "architecture", "target architecture", "stack", "seven"],
+  `<p>Seven layers, top to bottom: <b>01</b> Client Delivery (Kubernetes, API gateway), <b>02</b> Shared Services (SaaS), <b>03</b> Data & AI (data lake, ML workbench, MLOps), <b>04</b> DevOps / Automation (CI/CD, IaC, self-service), <b>05</b> Security (centralised IAM/Entra, zero-trust per client, CASB, encryption), <b>06</b> Connectivity (ExpressRoute/VPN), <b>07</b> Multi-Cloud Landing Zones.</p>`, null, ["dataai", "landing"]);
+E("dataai", "03", ["data lake", "mlops", "ai layer", "revenue engine", "ai platform", "new revenue", "data and ai", "data & ai", "ai services revenue"],
+  `<p>The <b>Data & AI layer</b> (centralised data lake, AI/ML workbench, MLOps pipeline) is flagged as the <b>new revenue engine</b>. It is the reusable asset behind managed AI services, which is why client analytics apps are refactored to cloud-native microservices.</p>`, null, ["refactor", "layers"]);
+E("landing", "03", ["landing zone", "landing zones", "iac", "infrastructure as code", "policy governed"],
+  `<p>Landing zones are standardised, <b>policy-governed environments built through Infrastructure-as-Code</b> on both Azure and AWS. A landing zone is pre-configured and policy-compliant, so consistency and governance apply from day one.</p>`, null, ["layers", "waves"]);
+E("critrisk", "06", ["critical risk", "most critical", "biggest risk", "single most", "top risk"],
+  `<p>The most critical architecture risk is <b>multi-tenant data leakage</b> across client environments that share platform layers. It is mitigated by per-client network segmentation, centralised IAM with least-privilege access, and encryption at rest and in transit by default.</p>`, { label: "Try low security spend", preset: "lowsec" }, ["controls", "register"]);
+E("5rs", "04", ["5r", "5rs", "five rs", "rehost", "replatform", "refactor", "retire", "retain", "migration framework", "migration strategy", "what is rehost"],
+  `<p>The <b>5Rs</b> framework: <b>Rehost</b> (lift-and-shift), <b>Replatform</b> (small optimisations, e.g. managed PaaS), <b>Refactor / Rearchitect</b> (rebuild cloud-native), <b>Retire</b> (decommission), <b>Retain</b> (keep as-is for now).</p><p>Applied to six workloads: PM tools and dev/test are replatformed, ERP is rehosted first, legacy ITSM is retired for SaaS, analytics apps are refactored, and HR/Payroll is retained short term.</p>`, null, ["workloads", "waves"]);
+E("workloads", "04", ["workload", "workloads", "erp", "payroll", "hr system", "itsm", "pm tools", "dev test", "dev/test", "analytics apps", "finance"],
+  `<p>Six representative workloads: <b>Client Delivery / PM Tools</b> → Replatform; <b>Internal ERP / Finance</b> → Rehost first, refactor in a later wave; <b>Legacy ITSM</b> → Retire (replace with SaaS); <b>Client Analytics Apps</b> → Refactor (new revenue); <b>HR / Payroll</b> → Retain short term (compliance); <b>Dev/Test</b> → Replatform (containers + IaC).</p>`, null, ["5rs", "refactor"]);
+E("refactor", "04", ["why refactor", "refactor analytics", "analytics app", "replatform like", "why not replatform"],
+  `<p>The analytics app is the foundation for the new AI-enabled services revenue stream. It needs a cloud-native, microservices architecture to support AI/ML integration, which replatforming alone would not deliver.</p>`, null, ["dataai", "workloads"]);
+E("waves", "04", ["wave", "waves", "sequencing", "wave 1", "wave 2", "wave 3", "crawl", "three waves", "3 waves"],
+  `<p>Three waves over 36 months, sequenced by risk (low-risk first):</p><p><b>Wave 1 (M0–M6)</b>: dev/test, internal SaaS, CCoE and landing zones. <b>Wave 2 (M6–M18)</b>: replatform PM tools, refactor analytics, build the data lake / AI platform. <b>Wave 3 (M18–M36)</b>: ERP refactor, regulated client workloads, full FinOps maturity.</p>`, { label: "Try a conservative pace", preset: "cons" }, ["rollback", "roadmap"]);
+E("rollback", "04", ["rollback", "roll back", "cutover", "continuity", "blue green", "blue-green", "warm standby", "parallel run", "cutover fails", "fails"],
+  `<p>Continuity plan: <b>phased parallel-run</b> per account, legacy kept in <b>warm standby</b> after cutover, <b>blue-green</b> deployment for client systems, and a <b>post-wave rightsizing review 4–6 weeks</b> after each wave. If a cutover fails, warm standby lets you reverse without full data loss.</p>`, null, ["waves", "sla"]);
+E("allocation", "05", ["investment", "allocation", "25 crore", "₹25", "25 cr", "budget split", "how is the budget", "breakdown", "allocate", "where does the money", "budget"],
+  `<p>The ₹25 Cr splits as: <b>Migration 40%</b> (₹10 Cr), <b>Infra / PaaS 25%</b> (₹6.25 Cr), <b>Skills 10%</b>, <b>AI Build 10%</b>, <b>Security / Governance 10%</b> (₹2.5 Cr each), and <b>Contingency 5%</b> (₹1.25 Cr).</p>`, { label: "Change the budget mix", preset: "lowsec" }, ["tco", "ten crore"]);
+E("tco", "05", ["tco", "total cost", "year 1", "dual run", "dual-run", "cost comparison", "why is year 1", "higher year", "year one", "capex", "opex"],
+  `<p>Year 1 cloud cost is <b>higher than legacy</b> because of migration cost and dual-running old and new systems. From Year 2, unit cost declines rapidly. A chart showing immediate savings would be unrealistic. The shift is also from CAPEX (upfront hardware) to OPEX (recurring, usage-based).</p>`, null, ["payback", "assumptions"]);
+E("payback", "05", ["roi", "payback", "pay back", "return on", "24 30", "24-30", "how long to recover", "break even", "break-even"],
+  `<p>Targets: <b>24–30 month payback</b>, 20–25% infra maintenance reduction by Year 3, provisioning from weeks to hours, a new AI-services revenue line, and near-zero SLA downtime penalties. The payback figure is the number most likely to be quoted back to a presenter.</p>`, { label: "Watch payback in the Simulator", preset: "cons" }, ["tco", "finops"]);
+E("finops", "05", ["finops", "fin ops", "cost governance", "chargeback", "tagging", "savings plan", "savings plans", "reserved instances", "rightsizing"],
+  `<p>The FinOps approach: <b>cost tagging</b> per account for chargeback, <b>budgets, alerts and monthly reviews</b>, <b>reserved instances / savings plans</b>, and regular <b>rightsizing reviews by the CCoE</b>. FinOps means managing cloud cost with visibility, accountability and optimisation, treated as a shared financial responsibility.</p>`, { label: "Try FinOps off", preset: "finopsoff" }, ["margins", "itbudget"]);
+E("margins", "05", ["protect margin", "protect margins", "margin", "margins", "how does finops protect"],
+  `<p>FinOps is the governance answer to the CFO's core fear, unpredictable consumption cost. Per-account tagging makes spend attributable, budgets and alerts catch drift early, savings plans lower unit cost, and CCoE rightsizing reviews keep it down. Without it, the register's top risk, <b>cost overrun</b>, rises.</p>`, { label: "See FinOps off in the Simulator", preset: "finopsoff" }, ["finops", "costhigher"]);
+E("itbudget", "05", ["it budget", "different from budget", "finops different", "finops versus", "finops vs"],
+  `<p>Traditional IT budgeting is annual and centralised. FinOps is <b>continuous, granular</b> (per client account or workload) and <b>cross-functional</b>: engineers, finance and account owners share cost decisions in near-real time.</p>`, null, ["finops"]);
+E("assumptions", "05", ["assumptions", "biggest assumptions", "three biggest", "key assumptions", "what assumptions"],
+  `<p>The three biggest assumptions (from the presenter notes): <b>(1)</b> migration and modernisation cost about 40% of budget, based on typical enterprise ratios, not vendor quotes; <b>(2)</b> benefits (infra savings, new AI revenue) ramp from Year 2, not Year 1; <b>(3)</b> provider pricing stays stable, with no allowance for consumption spikes without FinOps controls.</p>`, null, ["illustrative", "tco"]);
+E("costhigher", "05", ["25% higher", "costs rise", "cost overrun", "higher than estimate", "overrun", "overspend", "what if costs", "costs are higher", "over budget"],
+  `<p>The wave structure is a natural cost-control lever: pause or re-scope <b>Wave 3</b> (the most discretionary) before touching Wave 1 foundations, and use FinOps to find savings elsewhere first. In the register, cost overrun is rated <b>High</b> and mitigated by FinOps guardrails, monthly budget alerts and CCoE cost review. The 5% contingency is the buffer.</p>`, { label: "Try FinOps off", preset: "finopsoff" }, ["finops", "register"]);
+E("tencrore", "05", ["10 crore", "₹10", "10 cr", "half the budget", "smaller budget", "less budget", "only 10", "cut the budget"],
+  `<p>With ₹10 crore, prioritise <b>Wave 1 plus core Wave 2</b>: landing zones, the CCoE, dev/test and SaaS migration, initial reskilling and the data/AI platform foundation. Defer the full ERP refactor and expanded multi-cloud governance maturity to a later, separately funded phase. Protect the reskilling budget even under cuts, since it is the lowest-cost, highest-leverage item.</p>`, { label: "Cut the skills budget", preset: "lightskills" }, ["allocation", "waves"]);
+E("toprisks", "06", ["top risks", "gcc risk", "gcc risks", "multi tenant", "multi-tenant", "leakage", "insecure api", "insecure apis", "identity sprawl", "insider", "ransomware", "third party", "third-party"],
+  `<p>Top GCC risks: <b>multi-tenant data leakage</b>, insecure APIs on refactored client apps, identity sprawl across clouds, insider threat from broad access needs, and ransomware / third-party risk. Multi-tenant leakage is the most distinctive one for an IT-services business.</p>`, null, ["controls", "register"]);
+E("controls", "06", ["controls", "core controls", "zero trust", "zero-trust", "iam", "sso", "mfa", "encryption", "casb", "siem", "soc", "devsecops", "security controls", "entra"],
+  `<p>Core controls: <b>zero-trust</b> architecture with per-client segments (no user or device is trusted by default; every access request is verified), <b>centralised IAM</b> (SSO + MFA, Entra), <b>encryption</b> at rest and in transit, <b>CASB + SIEM/SOC</b> monitoring, and <b>DevSecOps</b> (security scanning shifted left into CI/CD).</p>`, { label: "Try low security spend", preset: "lowsec" }, ["toprisks", "compliance"]);
+E("governance", "06", ["governance", "escalation", "who decides", "accountable", "accountability", "ccoe", "cloud centre of excellence", "cloud center of excellence", "ownership", "escalation tier", "tiers"],
+  `<p>Three-tier escalation: <b>CIO/CTO</b> (strategic platform decisions) → <b>CCoE</b> (architecture standards, FinOps guardrails) → <b>Business / Account Owners</b> (client-specific exceptions and compliance). If a client-specific compliance issue arises, the account owner is accountable operationally while the CCoE sets and audits the standards centrally.</p>`, null, ["register"]);
+E("register", "06", ["risk register", "register", "risks", "mitigation", "mitigations", "five risks", "5 risks"],
+  `<p>The risk register: <b>Cost overrun</b> (High), <b>Multi-tenant data breach</b> (High), <b>Skills gap delaying migration</b> (Med), <b>Vendor lock-in</b> (Med), <b>Client SLA disruption</b> (Low). Each has a named mitigation: FinOps guardrails; segmentation, encryption and access reviews; reskilling plus partner/MSP support; multi-cloud with portable IaC; and phased per-account cutover with tested rollback.</p>`, { label: "See the live register", preset: "lowsec" }, ["governance", "controls"]);
+E("lockin", "06", ["vendor lock in", "vendor lock-in", "lock in", "lock-in", "avoid lock"],
+  `<p>Vendor lock-in is rated <b>Medium</b>. The mitigation is a multi-cloud architecture, portable IaC, and avoiding proprietary-only services. AWS as the secondary cloud exists partly for this reason.</p>`, { label: "Try an AWS-led mix", preset: "awsfirst" }, ["azure", "register"]);
+E("sla", "06", ["sla", "sla disruption", "downtime", "client sla", "service levels"],
+  `<p>Client SLA disruption is rated <b>Low</b>, mitigated by phased, per-account cutover with tested rollback plans (parallel-run, warm standby, blue-green). The economic goal is near-zero downtime SLA penalties.</p>`, { label: "Try an aggressive pace", preset: "cons" }, ["rollback"]);
+E("compliance", "06", ["compliance", "dpdp", "iso 27001", "soc 2", "compliance targets", "iso", "data protection"],
+  `<p>Compliance targets are the <b>India DPDP Act</b>, <b>ISO 27001</b> and <b>SOC 2</b>, to strengthen GCC credibility. The account owners handle client-specific compliance; the CCoE audits the underlying standards.</p>`, null, ["governance", "controls"]);
+E("skills", "07", ["reskill", "reskilling", "skills", "training", "tracks", "certification", "certified", "bootcamp", "bootcamps", "academy", "cohort", "certifications", "70%", "70 percent"],
+  `<p>Reskilling tracks: <b>certifications</b> (Associate → Professional) on Azure/AWS, <b>DevOps/CI-CD bootcamps</b> for delivery engineers, targeted <b>AI/ML cohorts</b> to seed the new practice, and <b>partner-led training</b> via hyperscaler academies. The target is <b>~70% certified by Year 2</b>.</p>`, { label: "Try light reskilling", preset: "lightskills" }, ["roles", "adoption"]);
+E("skillsgap", "07", ["skills gap", "skill gap", "skills shortage", "talent"],
+  `<p>"Skills gap delaying migration" is rated <b>Medium</b> in the register, mitigated by structured reskilling plus short-term partner/MSP support. Reskilling is also a retention and delivery-capacity argument: without it ABC loses staff to competitors or hires externally at a premium.</p>`, { label: "Try light reskilling", preset: "lightskills" }, ["skills"]);
+E("roles", "07", ["roles", "operating roles", "cloud architect", "devsecops engineer", "finops analyst", "aiml engineer", "ai/ml engineer", "ccoe lead", "target roles"],
+  `<p>Five target operating roles: <b>Cloud Architect</b>, <b>DevSecOps Engineer</b>, <b>FinOps Analyst</b>, <b>AI/ML Engineer</b> and <b>CCoE Lead</b>.</p>`, null, ["skills", "opmodel"]);
+E("opmodel", "07", ["operating model", "pods", "cloud and ai pods", "cloud & ai pods", "siloed", "staff augmentation", "siloed projects"],
+  `<p>The operating model shifts from <b>siloed projects</b> (staff augmentation, on-prem delivery) to <b>cross-functional Cloud + AI Pods</b> with CCoE governance. It is arguably the most transformative, hardest-to-execute change in the whole proposal.</p>`, null, ["adoption"]);
+E("adoption", "07", ["adoption", "metrics", "engagement", "time to productivity", "time-to-productivity", "how will employees", "change management", "resist", "resistance", "obsolete", "how do you ensure"],
+  `<p>Adoption is tracked through <b>certification %</b> (~70% by Year 2), <b>time-to-productivity</b> for redeployed legacy staff, and an <b>engagement score</b> from regular surveys. To drive adoption: tie certification to career progression, embed cloud champions per account, and communicate role evolution rather than job losses. Senior staff resistance is met with redeployment pathways and reskilling, framing legacy expertise as valuable domain knowledge.</p>`, { label: "Try intensive reskilling", preset: "intensive" }, ["skills", "opmodel"]);
+E("roadmap", "08", ["roadmap", "stage", "stages", "assess", "migrate", "transform", "optimise", "optimize", "36 month", "36 months", "timeline", "phases", "phase", "four stages", "4 stages"],
+  `<p>A four-stage, 36-month roadmap: <b>Stage 1 Assess (M0–6)</b>: CCoE, dev/test audit, SaaS readiness. <b>Stage 2 Migrate (M6–18)</b>: core platform migration, foundational AI infrastructure, Wave 1 transition. <b>Stage 3 Transform (M18–30)</b>: production AI services, governance at scale, cloud-native acceleration. <b>Stage 4 Optimise (M30–36)</b>: advanced FinOps maturity and full digital scale.</p>`, { label: "Try a conservative pace", preset: "cons" }, ["waves", "outcomes"]);
+E("outcomes", "08", ["outcome", "outcomes", "kpi", "kpis", "target outcomes", "80%", "nps", "targets", "success measures"],
+  `<p>Target outcomes (illustrative), each with a named owner: <b>~20–25%</b> infra cost reduction (CFO), <b>weeks → hours</b> provisioning (COO), <b>~80%</b> workloads migrated by Year 3 (CIO), a <b>new AI-services revenue line</b> (CEO), <b>~70%</b> workforce certified by Year 2 (CHRO), a <b>downward</b> security-incident trend (CISO), and <b>improved</b> client NPS (Delivery).</p>`, { label: "Open the Simulator", preset: "reset" }, ["measure", "board"]);
+E("measure", "08", ["12 months", "measure value", "measured", "after migration", "how will value", "value 12"],
+  `<p>At 12 months, expect early signals on <b>leading indicators</b>: provisioning time, % of Wave 1/2 workloads migrated, and certification rate. <b>Lagging</b> financial indicators (cost reduction, new AI revenue) become measurable from about Month 18–24 as Wave 2 benefits mature.</p>`, null, ["outcomes"]);
+E("glossary", "05", ["capex vs opex", "what is capex", "what is opex", "what is tco", "what is roi", "define", "meaning of", "glossary"],
+  `<p>Terms as the deck frames them: <b>CAPEX</b> is upfront hardware spend; <b>OPEX</b> is recurring, usage-based cost. <b>TCO</b> is all costs (infra, migration, licences, training, support) over a defined period. <b>Payback period</b> is the time to recover the investment. Ask about any specific term, such as FinOps, CCoE, 5Rs or zero-trust.</p>`, null, ["tco", "finops"]);
+E("rporto", "06", ["rpo", "rto", "recovery point", "recovery time", "recovery", "backup"],
+  `<p>RPO is how much data loss is acceptable and RTO is how fast systems must be restored after an incident. In the deck, recovery is supported by warm standby of legacy systems and tested rollback plans (Section 04), with security controls in Section 06.</p>`, null, ["rollback", "controls"]);
+E("gcc", "01", ["gcc", "global capability centre", "global capability center", "capability centre", "abc technology"],
+  `<p>A Global Capability Centre (GCC) provides technology, business-process or engineering services, either as an internal shared-service arm or externally to clients. ABC Technology Services plays both roles, so the strategy must serve internal group needs and external client credibility at once.</p>`, null, ["problem"]);
+E("devops", "03", ["devops", "ci cd", "ci/cd", "pipelines", "self service", "self-service"],
+  `<p>The <b>DevOps / Automation layer</b> holds CI/CD pipelines, Infrastructure-as-Code and environment self-service. It is what compresses provisioning from weeks to hours, and DevSecOps shifts security scanning into the same pipelines.</p>`, { label: "Try the platform levers", preset: "iaas" }, ["landing", "controls"]);
+E("simulator", "00", ["simulator", "simulate", "how do i use", "levers", "compare scenarios", "compare", "reset", "what can i change", "what can the simulator"],
+  `<p>The simulator has six lever groups: budget mix (six linked sliders totalling ₹25 Cr), cloud mix, service blend, migration pace, reskilling intensity and FinOps maturity. Outputs recompute live and carry delta arrows versus the Board plan. Use <b>Compare scenarios</b> to pin one state and see ghost marks against a second.</p>`, { label: "Open the Simulator", preset: "reset" }, ["illustrative"]);
+
+/* ---- retrieval ---- */
+const norm = (s) => " " + s.toLowerCase().replace(/[^a-z0-9₹%]+/g, " ").trim() + " ";
+KB.forEach((e) => { e.nk = e.keys.map((k) => norm(k)); });
+const OUT = ["stock", "share price", "gcp", "google cloud", "oracle", "alibaba", "ibm cloud", "salesforce", "weather", "recipe", "bitcoin", "football", "cricket", "movie", "who won", "capital of"];
+const SUGG = ["Why Azure primary, AWS secondary?", "What's the 5Rs migration framework?", "What is the Board being asked to approve?", "How does FinOps protect margins?"];
+const TITLES = { overview: "What is this proposal?", board: "What is the Board asked to approve?", illustrative: "How reliable are the numbers?", problem: "What is the core problem?", stakeholders: "Who is affected?", urgent: "Which stakeholder is most urgent?", whycloud: "Why cloud, not an upgrade?", objectives: "What are the objectives?", readiness: "How ready is ABC today?", models: "IaaS, PaaS and SaaS?", whypaas: "Why not all-in on PaaS?", azure: "Why Azure primary, AWS secondary?", awsfirst: "What if AWS goes first?", multicloud: "Doesn't multi-cloud add complexity?", onprem: "Why keep some on-prem?", outsource: "Why not outsource it all?", pillars: "What are the three pillars?", layers: "What are the seven layers?", dataai: "What is the Data & AI layer?", landing: "What is a landing zone?", critrisk: "What is the most critical risk?", "5rs": "What is the 5Rs framework?", workloads: "Which workloads move how?", refactor: "Why refactor analytics?", waves: "How do the waves work?", rollback: "What is the rollback plan?", allocation: "How is the ₹25 Cr split?", tco: "Why is Year 1 costlier?", payback: "What is the payback target?", finops: "What is FinOps here?", margins: "How does FinOps protect margins?", itbudget: "FinOps vs an IT budget?", assumptions: "What are the biggest assumptions?", costhigher: "What if costs run 25% higher?", tencrore: "What if only ₹10 Cr?", toprisks: "What are the top GCC risks?", controls: "What are the core controls?", governance: "Who is accountable?", register: "What is in the risk register?", lockin: "How is lock-in handled?", sla: "What about SLA disruption?", compliance: "Which compliance targets?", skills: "What are the reskilling tracks?", skillsgap: "What about the skills gap?", roles: "What are the target roles?", opmodel: "What is the operating model shift?", adoption: "How will adoption be measured?", roadmap: "What is the 36-month roadmap?", outcomes: "What are the target outcomes?", measure: "How is value measured at 12 months?", glossary: "Define TCO, CAPEX and OPEX", rporto: "What are RPO and RTO?", gcc: "What is a GCC?", devops: "What does DevOps do here?", simulator: "How do I use the simulator?" };
+
+function retrieve(q) {
+  const nq = norm(q);
+  if (OUT.some((t) => nq.includes(" " + t + " ") || nq.includes(" " + t))) return { out: true };
+  if (/^\s*(hi|hello|hey|hola|good (morning|evening|afternoon))\b/i.test(q.trim()) && q.trim().split(/\s+/).length < 5) return { greet: true };
+  if (/^\s*(thanks|thank you|thx|ok|okay|cool)\b/i.test(q.trim()) && q.trim().split(/\s+/).length < 5) return { thanks: true };
+  const scored = KB.map((e) => {
+    let s = 0;
+    e.nk.forEach((k) => { if (nq.includes(k)) s += 2 * k.trim().split(" ").length; });
+    return { e, s };
+  }).filter((x) => x.s > 0).sort((a, b) => b.s - a.s);
+  if (!scored.length || scored[0].s < 2) return { none: true };
+  return { hit: scored[0].e, alt: scored.slice(1, 3).map((x) => x.e) };
+}
+
+/* ---- UI ---- */
+const chat = $("#chat"), log = $("#log"), form = $("#chatForm"), input = $("#chatIn");
+let lastFocus = null, greeted = false;
+function scrollLog() { log.scrollTop = log.scrollHeight; }
+function addMsg(cls, html) { const d = document.createElement("div"); d.className = "msg " + cls; d.innerHTML = html; log.appendChild(d); scrollLog(); return d; }
+function chipRow(ids) {
+  const items = ids.map((id) => (typeof id === "string" && KB.find((k) => k.id === id) ? { q: TITLES[id] } : { q: id }));
+  return `<div class="chips">${items.map((i) => `<button class="qchip" type="button" data-q="${i.q.replace(/"/g, "&quot;")}">${i.q}</button>`).join("")}</div>`;
+}
+function welcome() {
+  if (greeted) return; greeted = true;
+  addMsg("b", `<p>Ask me anything about <b>Cloud Transformation 2030</b>: the problem, strategy, architecture, migration, economics, risk, people or roadmap. I answer only from this proposal, and I can jump you to the matching simulator lever.</p>${chipRow(SUGG)}`);
+}
+function respond(q) {
+  const r = retrieve(q);
+  const t = addMsg("b", `<span class="typing" aria-label="Typing"><i></i><i></i><i></i></span>`);
+  setTimeout(() => {
+    let html;
+    if (r.hit) {
+      const e = r.hit;
+      html = e.a + `<span class="cite">${SEC[e.sec]}</span>` + (e.act ? `<div class="act"><button class="btn sm primary" type="button" data-act="${e.act.preset}">${e.act.label} →</button></div>` : "");
+      const rel = (e.rel.length ? e.rel : r.alt.map((a) => a.id)).slice(0, 2).filter((id) => TITLES[id]);
+      if (rel.length) html += chipRow(rel);
+    } else if (r.greet) html = `<p>Hello. Ask about any of the eight sections, or try one of these.</p>${chipRow(SUGG)}`;
+    else if (r.thanks) html = `<p>Happy to help. Ask about another section whenever you like.</p>${chipRow(SUGG.slice(0, 2))}`;
+    else html = `<p>I only cover this transformation proposal (Cloud Transformation 2030 for ABC Technology Services), so I can't help with that one. Here are things I can answer:</p>${chipRow(["What is the Board asked to approve?", "How is the ₹25 Cr split?", "What are the top GCC risks?"])}`;
+    t.innerHTML = html; scrollLog();
+  }, reduce ? 0 : 650);
+}
+function ask(q) { q = q.trim(); if (!q) return; const u = document.createElement("div"); u.className = "msg u"; u.textContent = q; log.appendChild(u); scrollLog(); respond(q); }
+
+function openChat() {
+  lastFocus = document.activeElement; chat.classList.add("open"); chat.removeAttribute("inert"); chat.setAttribute("aria-hidden", "false");
+  $$("[aria-controls='chat']").forEach((b) => b.setAttribute("aria-expanded", "true")); $("#fab").style.display = "none";
+  welcome(); setTimeout(() => input.focus(), 120);
+}
+function closeChat() {
+  chat.classList.remove("open"); chat.setAttribute("inert", ""); chat.setAttribute("aria-hidden", "true");
+  $$("[aria-controls='chat']").forEach((b) => b.setAttribute("aria-expanded", "false")); $("#fab").style.display = "";
+  if (lastFocus && lastFocus.focus) lastFocus.focus();
+}
+$("#navAsk").addEventListener("click", () => (chat.classList.contains("open") ? closeChat() : openChat()));
+$("#fab").addEventListener("click", openChat);
+$("#chatClose").addEventListener("click", closeChat);
+$$("[data-ask]").forEach((b) => b.addEventListener("click", openChat));
+addEventListener("keydown", (e) => { if (e.key === "Escape" && chat.classList.contains("open")) closeChat(); });
+form.addEventListener("submit", (e) => { e.preventDefault(); const v = input.value; input.value = ""; ask(v); });
+log.addEventListener("click", (e) => {
+  const q = e.target.closest("[data-q]"); if (q) { ask(q.dataset.q); return; }
+  const a = e.target.closest("[data-act]");
+  if (a) { const p = a.dataset.act; if (matchMedia("(max-width:900px)").matches) closeChat(); if (p === "reset") { S = clone(BASE); syncSliders(); update(); $("#simulator").scrollIntoView({ behavior: reduce ? "auto" : "smooth" }); } else applyPreset(p); }
+});
+
+</script>
