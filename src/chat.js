@@ -144,7 +144,7 @@ function retrieve(q) {
 /* ---- UI ---- */
 const log = $("#log"), form = $("#chatForm"), input = $("#chatIn");
 let greeted = false;
-function scrollLog() { log.scrollTop = log.scrollHeight; }
+function scrollLog() { log.scrollTo({ top: log.scrollHeight, behavior: reduce ? "auto" : "smooth" }); }
 function addMsg(cls, html) { const d = document.createElement("div"); d.className = "msg " + cls; d.innerHTML = html; log.appendChild(d); scrollLog(); return d; }
 function chipRow(ids) {
   const items = ids.map((id) => (typeof id === "string" && KB.find((k) => k.id === id) ? { q: TITLES[id] } : { q: id }));

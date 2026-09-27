@@ -289,7 +289,7 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;bac
 /* jarvis — full page */
 #navAsk .jico{width:15px;height:15px;flex:none;fill:none;stroke:currentColor;stroke-width:1.3;stroke-linecap:round}
 #navAsk[aria-current]{background:#63b6ff}
-.jarvis-page{min-height:calc(100dvh - var(--nav-h) - 2px);display:flex;flex-direction:column;background:var(--bg)}
+.jarvis-page{height:calc(100dvh - var(--nav-h) - 2px);overflow:hidden;display:flex;flex-direction:column;background:var(--bg)}
 .jarvis-page::before{content:"";position:fixed;z-index:-1;width:640px;height:640px;right:-180px;top:-220px;background:radial-gradient(closest-side,rgba(62,166,255,.1),transparent);pointer-events:none}
 .jarvis-wrap{max-width:760px;flex:1;display:flex;flex-direction:column;min-height:0;padding-block:clamp(28px,5vw,44px) 20px}
 .jarvis-hd{display:flex;gap:16px;align-items:center}
