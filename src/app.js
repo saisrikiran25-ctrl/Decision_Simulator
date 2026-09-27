@@ -35,6 +35,7 @@ const viewHome = $("#viewHome"), viewJarvis = $("#viewJarvis"), navAsk = $("#nav
 function showView(v) {
   const toJarvis = v === "jarvis";
   viewJarvis.hidden = !toJarvis; viewHome.hidden = toJarvis;
+  document.body.classList.toggle("jarvis-open", toJarvis);
   if (toJarvis) { navAsk.setAttribute("aria-current", "page"); linkEls.forEach((a) => { a.classList.remove("on"); a.removeAttribute("aria-current"); }); progressBar.style.visibility = "hidden"; }
   else { navAsk.removeAttribute("aria-current"); progressBar.style.visibility = ""; }
 }
