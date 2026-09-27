@@ -142,8 +142,8 @@ function retrieve(q) {
 }
 
 /* ---- UI ---- */
-const chat = $("#chat"), log = $("#log"), form = $("#chatForm"), input = $("#chatIn");
-let lastFocus = null, greeted = false;
+const log = $("#log"), form = $("#chatForm"), input = $("#chatIn");
+let greeted = false;
 function scrollLog() { log.scrollTop = log.scrollHeight; }
 function addMsg(cls, html) { const d = document.createElement("div"); d.className = "msg " + cls; d.innerHTML = html; log.appendChild(d); scrollLog(); return d; }
 function chipRow(ids) {
@@ -152,7 +152,7 @@ function chipRow(ids) {
 }
 function welcome() {
   if (greeted) return; greeted = true;
-  addMsg("b", `<p>Ask me anything about <b>Cloud Transformation 2030</b>: the problem, strategy, architecture, migration, economics, risk, people or roadmap. I answer only from this proposal, and I can jump you to the matching simulator lever.</p>${chipRow(SUGG)}`);
+  addMsg("b", `<p>I'm <b>Jarvis</b>. Ask me anything about <b>Cloud Transformation 2030</b>: the problem, strategy, architecture, migration, economics, risk, people or roadmap. I answer only from this proposal, and I can jump you to the matching simulator lever.</p>${chipRow(SUGG)}`);
 }
 function respond(q) {
   const r = retrieve(q);
@@ -164,7 +164,7 @@ function respond(q) {
       html = e.a + `<span class="cite">${SEC[e.sec]}</span>` + (e.act ? `<div class="act"><button class="btn sm primary" type="button" data-act="${e.act.preset}">${e.act.label} →</button></div>` : "");
       const rel = (e.rel.length ? e.rel : r.alt.map((a) => a.id)).slice(0, 2).filter((id) => TITLES[id]);
       if (rel.length) html += chipRow(rel);
-    } else if (r.greet) html = `<p>Hello. Ask about any of the eight sections, or try one of these.</p>${chipRow(SUGG)}`;
+    } else if (r.greet) html = `<p>Hello, I'm Jarvis. Ask about any of the eight sections, or try one of these.</p>${chipRow(SUGG)}`;
     else if (r.thanks) html = `<p>Happy to help. Ask about another section whenever you like.</p>${chipRow(SUGG.slice(0, 2))}`;
     else html = `<p>I only cover this transformation proposal (Cloud Transformation 2030 for ABC Technology Services), so I can't help with that one. Here are things I can answer:</p>${chipRow(["What is the Board asked to approve?", "How is the ₹25 Cr split?", "What are the top GCC risks?"])}`;
     t.innerHTML = html; scrollLog();
@@ -172,24 +172,11 @@ function respond(q) {
 }
 function ask(q) { q = q.trim(); if (!q) return; const u = document.createElement("div"); u.className = "msg u"; u.textContent = q; log.appendChild(u); scrollLog(); respond(q); }
 
-function openChat() {
-  lastFocus = document.activeElement; chat.classList.add("open"); chat.removeAttribute("inert"); chat.setAttribute("aria-hidden", "false");
-  $$("[aria-controls='chat']").forEach((b) => b.setAttribute("aria-expanded", "true")); $("#fab").style.display = "none";
-  welcome(); setTimeout(() => input.focus(), 120);
-}
-function closeChat() {
-  chat.classList.remove("open"); chat.setAttribute("inert", ""); chat.setAttribute("aria-hidden", "true");
-  $$("[aria-controls='chat']").forEach((b) => b.setAttribute("aria-expanded", "false")); $("#fab").style.display = "";
-  if (lastFocus && lastFocus.focus) lastFocus.focus();
-}
-$("#navAsk").addEventListener("click", () => (chat.classList.contains("open") ? closeChat() : openChat()));
-$("#fab").addEventListener("click", openChat);
-$("#chatClose").addEventListener("click", closeChat);
-$$("[data-ask]").forEach((b) => b.addEventListener("click", openChat));
-addEventListener("keydown", (e) => { if (e.key === "Escape" && chat.classList.contains("open")) closeChat(); });
+$$("[data-ask]").forEach((b) => b.addEventListener("click", () => goto("jarvis")));
 form.addEventListener("submit", (e) => { e.preventDefault(); const v = input.value; input.value = ""; ask(v); });
 log.addEventListener("click", (e) => {
   const q = e.target.closest("[data-q]"); if (q) { ask(q.dataset.q); return; }
   const a = e.target.closest("[data-act]");
-  if (a) { const p = a.dataset.act; if (matchMedia("(max-width:900px)").matches) closeChat(); if (p === "reset") { S = clone(BASE); syncSliders(); update(); $("#simulator").scrollIntoView({ behavior: reduce ? "auto" : "smooth" }); } else applyPreset(p); }
+  if (a) { const p = a.dataset.act; if (p === "reset") { showView("home"); S = clone(BASE); syncSliders(); update(); requestAnimationFrame(() => $("#simulator").scrollIntoView({ behavior: reduce ? "auto" : "smooth" })); } else { showView("home"); applyPreset(p); } }
 });
+if (!viewJarvis.hidden) welcome();

@@ -290,18 +290,24 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;bac
 .ddetail{margin-top:14px;color:var(--ink2);font-size:14px;min-height:24px}
 .appr{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 
-/* chat */
-.fab{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:40;box-shadow:0 14px 34px -10px rgba(62,166,255,.6)}
-.chat{position:fixed;top:0;right:0;bottom:0;width:min(430px,100vw);z-index:70;background:var(--surface);border-left:1px solid var(--line2);display:flex;flex-direction:column;transform:translateX(104%);visibility:hidden;transition:transform .3s cubic-bezier(.2,.7,.2,1),visibility 0s .3s;padding-top:env(safe-area-inset-top,0px);box-shadow:-30px 0 60px -30px rgba(0,0,0,.8)}
-.chat.open{transform:none;visibility:visible;transition:transform .3s cubic-bezier(.2,.7,.2,1),visibility 0s}
-.chat-hd{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line)}
-.chat-hd h2{font:400 22px/1.1 var(--f-display);letter-spacing:-.01em}
-.chat-hd p{font-size:12px;color:var(--ink3);margin-top:4px}
-.x{width:34px;height:34px;border-radius:9px;border:1px solid var(--line2);background:transparent;display:grid;place-items:center;flex:none}
-.log{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:14px;overscroll-behavior:contain}
-.msg{max-width:92%;font-size:14px;line-height:1.55}
-.msg.u{align-self:flex-end;background:var(--blue);color:#04121f;padding:9px 13px;border-radius:14px 14px 4px 14px;font-weight:500}
-.msg.b{align-self:flex-start;background:var(--surface2);border:1px solid var(--line);padding:12px 14px;border-radius:14px 14px 14px 4px;color:var(--ink)}
+/* jarvis — full page */
+#navAsk .jico{width:15px;height:15px;flex:none;fill:none;stroke:currentColor;stroke-width:1.3;stroke-linecap:round}
+#navAsk[aria-current]{background:#63b6ff}
+.jarvis-page{min-height:calc(100dvh - var(--nav-h) - 2px);display:flex;flex-direction:column;background:var(--bg)}
+.jarvis-page::before{content:"";position:fixed;z-index:-1;width:640px;height:640px;right:-180px;top:-220px;background:radial-gradient(closest-side,rgba(62,166,255,.1),transparent);pointer-events:none}
+.jarvis-wrap{max-width:760px;flex:1;display:flex;flex-direction:column;min-height:0;padding-block:clamp(28px,5vw,44px) 20px}
+.jarvis-hd{display:flex;gap:16px;align-items:center}
+.jarvis-hd h1{font:400 clamp(28px,4vw,38px)/1.1 var(--f-display);letter-spacing:-.01em}
+.jarvis-hd p{color:var(--ink2);margin-top:4px;font-size:14px}
+.log{flex:1;overflow-y:auto;padding:22px 0;display:flex;flex-direction:column;gap:16px;overscroll-behavior:contain;border-top:1px solid var(--line);margin-top:26px}
+.jarvis-input{display:flex;gap:8px;padding-top:16px;border-top:1px solid var(--line)}
+.jarvis-input input{flex:1;min-width:0;background:var(--surface);border:1px solid var(--line2);border-radius:11px;color:var(--ink);padding:13px 15px;font:400 15px var(--f-body)}
+.jarvis-input input::placeholder{color:var(--ink3)}
+.jarvis-input input:focus-visible{border-color:var(--blue-line)}
+.jarvis-scope{display:block;margin-top:10px;color:var(--ink3);letter-spacing:.04em}
+.msg{max-width:86%;font-size:14.5px;line-height:1.6}
+.msg.u{align-self:flex-end;background:var(--blue);color:#04121f;padding:10px 14px;border-radius:14px 14px 4px 14px;font-weight:500}
+.msg.b{align-self:flex-start;background:var(--surface2);border:1px solid var(--line);padding:15px 17px;border-radius:14px 14px 14px 4px;color:var(--ink)}
 .msg.b p+p{margin-top:8px}
 .msg .cite{display:block;margin-top:10px;font:500 10.5px var(--f-mono);letter-spacing:.06em;color:var(--ink3)}
 .msg .act{margin-top:10px}
@@ -312,12 +318,7 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;bac
 .typing i{width:6px;height:6px;border-radius:50%;background:var(--ink3);animation:bl 1s infinite}
 .typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
 @keyframes bl{0%,60%,100%{opacity:.3;transform:none}30%{opacity:1;transform:translateY(-3px)}}
-.chat-ft{padding:12px 14px calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line)}
-.chat-ft form{display:flex;gap:8px}
-.chat-ft input{flex:1;min-width:0;background:var(--bg);border:1px solid var(--line2);border-radius:11px;color:var(--ink);padding:11px 13px;font:400 14px var(--f-body)}
-.chat-ft input::placeholder{color:var(--ink3)}
-.chat-ft small{display:block;margin-top:8px;font:500 10.5px var(--f-mono);color:var(--ink3);letter-spacing:.04em}
-@media (max-width:640px){.chat{top:auto;height:88vh;height:88dvh;width:100%;border-left:0;border-top:1px solid var(--line2);border-radius:18px 18px 0 0;transform:translateY(104%)}.fab span{display:none}}
+@media (max-width:640px){.jarvis-wrap{padding-block:20px 14px}.jarvis-hd .sico{width:44px;height:44px}}
 
 footer{margin-top:80px;padding-block:32px 96px;border-top:1px solid var(--line);color:var(--ink3);font-size:13px}
 footer .wrap{display:flex;flex-wrap:wrap;gap:12px 24px;justify-content:space-between;align-items:center}
@@ -369,18 +370,25 @@ h1.title{font-size:clamp(42px,6vw,80px)}
 .hero-art .ping{transform-box:fill-box;transform-origin:center;animation:ping 3s ease-out infinite}
 @keyframes ping{0%{transform:scale(.8);opacity:.8}100%{transform:scale(2.4);opacity:0}}
 
+.hero-art .flow{stroke-dasharray:1 13;animation:flow2 2.2s linear infinite}
+@keyframes flow2{to{stroke-dashoffset:-56}}
+
+.hero-art .ringspin{transform-box:view-box;transform-origin:50% 50%;animation:spin 60s linear infinite}
+.hero-art .ping{animation:ping 3.2s ease-out infinite;transform-box:fill-box;transform-origin:center}
+
 </style>
 <header class="nav" id="top">
   <div class="nav-in wrap">
     <a class="brand" href="#hero" aria-label="Decision Simulator, top of page">Decision Simulator</a>
     <nav class="links" id="links" aria-label="Deck sections"></nav>
     <div class="nav-cta">
-      <button class="btn primary" type="button" id="navAsk" aria-controls="chat" aria-expanded="false">Ask the Deck</button>
+      <button class="btn primary" type="button" id="navAsk"><svg class="jico" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.6v2.1M8 12.3v2.1M1.6 8h2.1M12.3 8h2.1M3.8 3.8l1.5 1.5M10.7 10.7l1.5 1.5M12.2 3.8l-1.5 1.5M5.3 10.7l-1.5 1.5"/><circle cx="8" cy="8" r="2.3"/></svg>Jarvis</button>
     </div>
   </div>
   <div class="progress" aria-hidden="true"><i id="prog"></i></div>
 </header>
 
+<div id="viewHome">
 <main>
   <section class="hero" id="hero">
     <div class="wrap">
@@ -392,45 +400,39 @@ h1.title{font-size:clamp(42px,6vw,80px)}
           <div class="mandate"><span class="eyebrow">Strategic mandate</span><p style="margin-top:10px" id="mandate"></p></div>
           <div class="hero-cta">
             <a class="btn primary" href="#simulator">Simulate the transformation</a>
-            <button class="btn" type="button" data-ask>Ask the Deck</button>
+            <button class="btn" type="button" data-ask>Ask Jarvis</button>
             <span class="pill amber">All figures illustrative assumptions</span>
           </div>
         </div>
-        <svg class="hero-art" viewBox="0 0 440 440" role="img" aria-label="Architecture map: a CCoE hub linking Azure as the primary cloud, AWS as secondary, a Data and AI layer, dev/test environments and retained on-premises systems">
+        <svg class="hero-art" viewBox="0 0 400 400" role="img" aria-label="Network of cloud nodes around a central platform: dev/test, Azure, AWS, data and AI, and on-premises">
           <defs>
-            <radialGradient id="hg" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#3ea6ff" stop-opacity=".22"/><stop offset=".6" stop-color="#3ea6ff" stop-opacity=".05"/><stop offset="1" stop-color="#3ea6ff" stop-opacity="0"/></radialGradient>
-            <linearGradient id="orb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3ea6ff" stop-opacity=".9"/><stop offset="1" stop-color="#3ea6ff" stop-opacity="0"/></linearGradient>
+            <radialGradient id="hg" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#3ea6ff" stop-opacity=".3"/><stop offset=".6" stop-color="#3ea6ff" stop-opacity=".07"/><stop offset="1" stop-color="#3ea6ff" stop-opacity="0"/></radialGradient>
+            <radialGradient id="core" cx="38%" cy="34%" r="70%"><stop offset="0" stop-color="#8fcaff"/><stop offset="1" stop-color="#3ea6ff"/></radialGradient>
           </defs>
-          <circle cx="220" cy="220" r="215" fill="url(#hg)"/>
-          <circle cx="220" cy="220" r="150" fill="none" style="stroke:var(--line2)" stroke-width="1"/>
-          <circle cx="220" cy="220" r="92" fill="none" style="stroke:var(--line)" stroke-width="1" stroke-dasharray="2 6"/>
-          <g class="orbit"><path d="M220 70 A150 150 0 0 1 370 220" fill="none" stroke="url(#orb)" stroke-width="1.6" stroke-linecap="round"/><circle cx="370" cy="220" r="3.4" style="fill:var(--blue)"/></g>
-          <path d="M326 114 Q382 205 350 295" fill="none" style="stroke:var(--blue-line)" stroke-width="1" stroke-dasharray="3 5"/>
-          <g fill="none" stroke-linecap="round">
-            <g style="stroke:var(--blue-line)" stroke-width="1.2"><path d="M220 220L326 114M220 220L350 295M220 220L194 368M220 220L114 114"/></g>
-            <g style="stroke:var(--blue)" stroke-width="1.4" class="flow"><path d="M220 220L326 114M220 220L350 295M220 220L194 368M220 220L114 114"/></g>
-            <path d="M220 220L72 246" style="stroke:var(--slate)" stroke-width="1.2" stroke-dasharray="2 5"/>
+          <circle cx="200" cy="200" r="196" fill="url(#hg)"/>
+          <g class="ringspin"><circle cx="200" cy="200" r="150" fill="none" stroke="#3ea6ff" stroke-opacity=".3" stroke-dasharray="2 7" stroke-linecap="round"/></g>
+          <circle cx="200" cy="200" r="92" fill="none" stroke="#3ea6ff" stroke-opacity=".2" stroke-dasharray="1.5 6" stroke-linecap="round"/>
+          <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M200 200L92 96M200 200L318 122M200 200L306 286M200 200L150 330M200 200L66 236" stroke="#3ea6ff" stroke-opacity=".5" stroke-width="1"/>
+            <path d="M92 96L318 122L306 286L150 330L66 236Z" stroke="#3ea6ff" stroke-opacity=".38" stroke-width="1"/>
           </g>
-          <circle class="ping" cx="194" cy="368" r="11" fill="none" style="stroke:var(--blue)" stroke-width="1.2"/>
-          <circle cx="220" cy="220" r="40" style="fill:var(--surface);stroke:var(--blue-line)" stroke-width="1"/>
-          <circle cx="220" cy="220" r="30" style="fill:var(--blue-soft);stroke:var(--blue)" stroke-width="1.3"/>
-          <text x="220" y="218" text-anchor="middle" font-size="12" font-weight="600" style="fill:var(--ink)">CCoE</text>
-          <text x="220" y="231" text-anchor="middle" font-size="7.5" letter-spacing="1" style="fill:var(--ink3)">GOVERNS</text>
-          <circle cx="326" cy="114" r="13" style="fill:var(--blue);stroke:var(--blue)" stroke-width="1.6"/>
-          <text x="326" y="85" text-anchor="middle" font-size="11" font-weight="600" letter-spacing="1.2" style="fill:var(--ink)">AZURE</text>
-          <text x="326" y="96" text-anchor="middle" font-size="8.5" letter-spacing=".6" style="fill:var(--ink3)">primary cloud</text>
-          <circle cx="114" cy="114" r="8" style="fill:var(--bg);stroke:var(--ink2)" stroke-width="1.6"/>
-          <text x="114" y="90" text-anchor="middle" font-size="11" font-weight="600" letter-spacing="1.2" style="fill:var(--ink)">DEV/TEST</text>
-          <text x="114" y="101" text-anchor="middle" font-size="8.5" letter-spacing=".6" style="fill:var(--ink3)">wave 1</text>
-          <circle cx="350" cy="295" r="10" style="fill:var(--bg);stroke:var(--ink2)" stroke-width="1.6"/>
-          <text x="350" y="320" text-anchor="middle" font-size="11" font-weight="600" letter-spacing="1.2" style="fill:var(--ink)">AWS</text>
-          <text x="350" y="332" text-anchor="middle" font-size="8.5" letter-spacing=".6" style="fill:var(--ink3)">secondary cloud</text>
-          <circle cx="194" cy="368" r="11" style="fill:var(--bg);stroke:var(--blue)" stroke-width="1.6"/>
-          <text x="194" y="394" text-anchor="middle" font-size="11" font-weight="600" letter-spacing="1.2" style="fill:var(--ink)">DATA + AI</text>
-          <text x="194" y="406" text-anchor="middle" font-size="8.5" letter-spacing=".6" style="fill:var(--ink3)">revenue engine</text>
-          <circle cx="72" cy="246" r="8" style="fill:var(--bg);stroke:var(--slate)" stroke-width="1.6"/>
-          <text x="72" y="269" text-anchor="middle" font-size="11" font-weight="600" letter-spacing="1.2" style="fill:var(--ink)">ON-PREM</text>
-          <text x="72" y="281" text-anchor="middle" font-size="8.5" letter-spacing=".6" style="fill:var(--ink3)">retained</text>
+          <g fill="#3ea6ff" fill-opacity=".14">
+            <circle cx="92" cy="96" r="15"/><circle cx="318" cy="122" r="20"/><circle cx="306" cy="286" r="15"/><circle cx="150" cy="330" r="17"/><circle cx="66" cy="236" r="13"/>
+          </g>
+          <g style="fill:var(--bg)" stroke="#3ea6ff" stroke-width="1.6">
+            <circle cx="92" cy="96" r="8"/><circle cx="318" cy="122" r="11" stroke-width="2"/><circle cx="306" cy="286" r="8"/><circle cx="150" cy="330" r="10"/><circle cx="66" cy="236" r="7"/>
+          </g>
+          <g fill="#3ea6ff"><circle cx="92" cy="96" r="2.6"/><circle cx="318" cy="122" r="4.4"/><circle cx="306" cy="286" r="2.6"/><circle cx="150" cy="330" r="3.6"/><circle cx="66" cy="236" r="2.2"/></g>
+          <circle class="ping" cx="200" cy="200" r="34" fill="none" stroke="#3ea6ff" stroke-width="1.2"/>
+          <circle cx="200" cy="200" r="34" fill="none" stroke="#3ea6ff" stroke-opacity=".5"/>
+          <circle cx="200" cy="200" r="22" fill="url(#core)"/>
+          <g font-size="10.5" font-weight="500" letter-spacing="1.6" style="fill:var(--ink2)">
+            <text x="106" y="82">DEV/TEST</text>
+            <text x="302" y="103" text-anchor="end">AZURE</text>
+            <text x="306" y="313" text-anchor="middle">AWS</text>
+            <text x="150" y="358" text-anchor="middle">DATA + AI</text>
+            <text x="66" y="262" text-anchor="middle">ON-PREM</text>
+          </g>
         </svg>
       </div>
       <div class="readouts rise" aria-label="Headline numbers">
@@ -448,7 +450,7 @@ h1.title{font-size:clamp(42px,6vw,80px)}
         <span class="sico" aria-hidden="true"><svg viewBox="0 0 16 16"><rect x="2" y="2" width="5" height="5" rx="1.2"/><rect x="9" y="2" width="5" height="5" rx="1.2"/><rect x="2" y="9" width="5" height="5" rx="1.2"/><rect x="9" y="9" width="5" height="5" rx="1.2"/></svg></span>
         <div>
           <h2 id="ovh">The proposal in brief</h2>
-          <p class="sub">Eight ideas, one line each. Use the simulator to test them and the chat to go deeper.</p>
+          <p class="sub">Eight ideas, one line each. Use the simulator to test them and ask Jarvis to go deeper.</p>
         </div>
       </div>
       <div id="ovBody"></div>
@@ -497,23 +499,22 @@ h1.title{font-size:clamp(42px,6vw,80px)}
     <span class="tag">All figures are illustrative assumptions</span>
   </div>
 </footer>
+</div>
 
-<button class="btn primary fab" type="button" id="fab" aria-controls="chat" aria-expanded="false">Ask the Deck<span> →</span></button>
-
-<aside class="chat" id="chat" role="dialog" aria-label="Ask the Deck" aria-hidden="true" inert>
-  <div class="chat-hd">
-    <div><h2>Ask the Deck</h2><p>Answers come only from this proposal.</p></div>
-    <button class="x" type="button" id="chatClose" aria-label="Close chat"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
-  </div>
-  <div class="log" id="log" aria-live="polite"></div>
-  <div class="chat-ft">
-    <form id="chatForm" autocomplete="off">
-      <input id="chatIn" type="text" placeholder="Ask about any section…" aria-label="Your question" maxlength="240">
+<section id="viewJarvis" class="jarvis-page" hidden aria-labelledby="jarvisH">
+  <div class="wrap jarvis-wrap">
+    <div class="jarvis-hd">
+      <span class="sico" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M8 1.6v2.1M8 12.3v2.1M1.6 8h2.1M12.3 8h2.1M3.8 3.8l1.5 1.5M10.7 10.7l1.5 1.5M12.2 3.8l-1.5 1.5M5.3 10.7l-1.5 1.5"/><circle cx="8" cy="8" r="2.3"/></svg></span>
+      <div><h1 id="jarvisH">Jarvis</h1><p>Answers come only from this proposal.</p></div>
+    </div>
+    <div class="log" id="log" aria-live="polite"></div>
+    <form class="jarvis-input" id="chatForm" autocomplete="off">
+      <input id="chatIn" type="text" placeholder="Ask Jarvis about any section…" aria-label="Your question" maxlength="240">
       <button class="btn primary" type="submit">Send</button>
     </form>
-    <small>Scope: the 8 sections of Cloud Transformation 2030</small>
+    <small class="jarvis-scope mono">Scope: the 8 sections of Cloud Transformation 2030</small>
   </div>
-</aside>
+</section>
 
 <div class="tip" id="tip" role="tooltip"></div>
 <script>
@@ -850,6 +851,24 @@ addEventListener("scroll", () => {
   if (ticking) return; ticking = true;
   requestAnimationFrame(() => { const d = document.documentElement; const p = d.scrollTop / Math.max(1, d.scrollHeight - innerHeight); $("#prog").style.width = (p * 100).toFixed(1) + "%"; ticking = false; });
 }, { passive: true });
+
+/* ---------- view switching: Overview/Simulator (scrolling home) vs Jarvis (its own page) ---------- */
+const viewHome = $("#viewHome"), viewJarvis = $("#viewJarvis"), navAsk = $("#navAsk"), progressBar = $(".progress");
+function showView(v) {
+  const toJarvis = v === "jarvis";
+  viewJarvis.hidden = !toJarvis; viewHome.hidden = toJarvis;
+  if (toJarvis) { navAsk.setAttribute("aria-current", "page"); linkEls.forEach((a) => { a.classList.remove("on"); a.removeAttribute("aria-current"); }); progressBar.style.visibility = "hidden"; }
+  else { navAsk.removeAttribute("aria-current"); progressBar.style.visibility = ""; }
+}
+function goto(id) {
+  if (id === "jarvis") { showView("jarvis"); if (typeof welcome === "function") welcome(); setTimeout(() => { const i = $("#chatIn"); if (i) i.focus({ preventScroll: true }); }, reduce ? 0 : 80); return; }
+  showView("home");
+  requestAnimationFrame(() => { const el = document.getElementById(id); if (el) el.scrollIntoView({ behavior: reduce ? "auto" : "smooth" }); });
+}
+$(".brand").addEventListener("click", (e) => { e.preventDefault(); goto("hero"); });
+$("#links").addEventListener("click", (e) => { const a = e.target.closest("a"); if (!a) return; e.preventDefault(); goto(a.dataset.s); });
+navAsk.addEventListener("click", () => goto("jarvis"));
+if (location.hash === "#jarvis") showView("jarvis");
 
 /* ---------- tooltip ---------- */
 const tip = $("#tip");
@@ -1293,8 +1312,8 @@ function retrieve(q) {
 }
 
 /* ---- UI ---- */
-const chat = $("#chat"), log = $("#log"), form = $("#chatForm"), input = $("#chatIn");
-let lastFocus = null, greeted = false;
+const log = $("#log"), form = $("#chatForm"), input = $("#chatIn");
+let greeted = false;
 function scrollLog() { log.scrollTop = log.scrollHeight; }
 function addMsg(cls, html) { const d = document.createElement("div"); d.className = "msg " + cls; d.innerHTML = html; log.appendChild(d); scrollLog(); return d; }
 function chipRow(ids) {
@@ -1303,7 +1322,7 @@ function chipRow(ids) {
 }
 function welcome() {
   if (greeted) return; greeted = true;
-  addMsg("b", `<p>Ask me anything about <b>Cloud Transformation 2030</b>: the problem, strategy, architecture, migration, economics, risk, people or roadmap. I answer only from this proposal, and I can jump you to the matching simulator lever.</p>${chipRow(SUGG)}`);
+  addMsg("b", `<p>I'm <b>Jarvis</b>. Ask me anything about <b>Cloud Transformation 2030</b>: the problem, strategy, architecture, migration, economics, risk, people or roadmap. I answer only from this proposal, and I can jump you to the matching simulator lever.</p>${chipRow(SUGG)}`);
 }
 function respond(q) {
   const r = retrieve(q);
@@ -1315,7 +1334,7 @@ function respond(q) {
       html = e.a + `<span class="cite">${SEC[e.sec]}</span>` + (e.act ? `<div class="act"><button class="btn sm primary" type="button" data-act="${e.act.preset}">${e.act.label} →</button></div>` : "");
       const rel = (e.rel.length ? e.rel : r.alt.map((a) => a.id)).slice(0, 2).filter((id) => TITLES[id]);
       if (rel.length) html += chipRow(rel);
-    } else if (r.greet) html = `<p>Hello. Ask about any of the eight sections, or try one of these.</p>${chipRow(SUGG)}`;
+    } else if (r.greet) html = `<p>Hello, I'm Jarvis. Ask about any of the eight sections, or try one of these.</p>${chipRow(SUGG)}`;
     else if (r.thanks) html = `<p>Happy to help. Ask about another section whenever you like.</p>${chipRow(SUGG.slice(0, 2))}`;
     else html = `<p>I only cover this transformation proposal (Cloud Transformation 2030 for ABC Technology Services), so I can't help with that one. Here are things I can answer:</p>${chipRow(["What is the Board asked to approve?", "How is the ₹25 Cr split?", "What are the top GCC risks?"])}`;
     t.innerHTML = html; scrollLog();
@@ -1323,26 +1342,13 @@ function respond(q) {
 }
 function ask(q) { q = q.trim(); if (!q) return; const u = document.createElement("div"); u.className = "msg u"; u.textContent = q; log.appendChild(u); scrollLog(); respond(q); }
 
-function openChat() {
-  lastFocus = document.activeElement; chat.classList.add("open"); chat.removeAttribute("inert"); chat.setAttribute("aria-hidden", "false");
-  $$("[aria-controls='chat']").forEach((b) => b.setAttribute("aria-expanded", "true")); $("#fab").style.display = "none";
-  welcome(); setTimeout(() => input.focus(), 120);
-}
-function closeChat() {
-  chat.classList.remove("open"); chat.setAttribute("inert", ""); chat.setAttribute("aria-hidden", "true");
-  $$("[aria-controls='chat']").forEach((b) => b.setAttribute("aria-expanded", "false")); $("#fab").style.display = "";
-  if (lastFocus && lastFocus.focus) lastFocus.focus();
-}
-$("#navAsk").addEventListener("click", () => (chat.classList.contains("open") ? closeChat() : openChat()));
-$("#fab").addEventListener("click", openChat);
-$("#chatClose").addEventListener("click", closeChat);
-$$("[data-ask]").forEach((b) => b.addEventListener("click", openChat));
-addEventListener("keydown", (e) => { if (e.key === "Escape" && chat.classList.contains("open")) closeChat(); });
+$$("[data-ask]").forEach((b) => b.addEventListener("click", () => goto("jarvis")));
 form.addEventListener("submit", (e) => { e.preventDefault(); const v = input.value; input.value = ""; ask(v); });
 log.addEventListener("click", (e) => {
   const q = e.target.closest("[data-q]"); if (q) { ask(q.dataset.q); return; }
   const a = e.target.closest("[data-act]");
-  if (a) { const p = a.dataset.act; if (matchMedia("(max-width:900px)").matches) closeChat(); if (p === "reset") { S = clone(BASE); syncSliders(); update(); $("#simulator").scrollIntoView({ behavior: reduce ? "auto" : "smooth" }); } else applyPreset(p); }
+  if (a) { const p = a.dataset.act; if (p === "reset") { showView("home"); S = clone(BASE); syncSliders(); update(); requestAnimationFrame(() => $("#simulator").scrollIntoView({ behavior: reduce ? "auto" : "smooth" })); } else { showView("home"); applyPreset(p); } }
 });
+if (!viewJarvis.hidden) welcome();
 
 </script>

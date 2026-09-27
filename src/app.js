@@ -30,6 +30,24 @@ addEventListener("scroll", () => {
   requestAnimationFrame(() => { const d = document.documentElement; const p = d.scrollTop / Math.max(1, d.scrollHeight - innerHeight); $("#prog").style.width = (p * 100).toFixed(1) + "%"; ticking = false; });
 }, { passive: true });
 
+/* ---------- view switching: Overview/Simulator (scrolling home) vs Jarvis (its own page) ---------- */
+const viewHome = $("#viewHome"), viewJarvis = $("#viewJarvis"), navAsk = $("#navAsk"), progressBar = $(".progress");
+function showView(v) {
+  const toJarvis = v === "jarvis";
+  viewJarvis.hidden = !toJarvis; viewHome.hidden = toJarvis;
+  if (toJarvis) { navAsk.setAttribute("aria-current", "page"); linkEls.forEach((a) => { a.classList.remove("on"); a.removeAttribute("aria-current"); }); progressBar.style.visibility = "hidden"; }
+  else { navAsk.removeAttribute("aria-current"); progressBar.style.visibility = ""; }
+}
+function goto(id) {
+  if (id === "jarvis") { showView("jarvis"); if (typeof welcome === "function") welcome(); setTimeout(() => { const i = $("#chatIn"); if (i) i.focus({ preventScroll: true }); }, reduce ? 0 : 80); return; }
+  showView("home");
+  requestAnimationFrame(() => { const el = document.getElementById(id); if (el) el.scrollIntoView({ behavior: reduce ? "auto" : "smooth" }); });
+}
+$(".brand").addEventListener("click", (e) => { e.preventDefault(); goto("hero"); });
+$("#links").addEventListener("click", (e) => { const a = e.target.closest("a"); if (!a) return; e.preventDefault(); goto(a.dataset.s); });
+navAsk.addEventListener("click", () => goto("jarvis"));
+if (location.hash === "#jarvis") showView("jarvis");
+
 /* ---------- tooltip ---------- */
 const tip = $("#tip");
 function placeTip(x, y) { const w = tip.offsetWidth, h = tip.offsetHeight; tip.style.left = Math.min(innerWidth - w - 8, Math.max(8, x + 12)) + "px"; tip.style.top = Math.max(8, y - h - 12) + "px"; }
